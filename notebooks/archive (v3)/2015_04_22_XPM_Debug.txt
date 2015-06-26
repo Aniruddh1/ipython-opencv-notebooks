@@ -1,0 +1,501 @@
+2015_04_22 - XPM Testing
+
+Try to pinpoint:
+ 1) which set of SEPD commands allows us to print
+ 2) which "hacked" parameters of UPDP is the magic
+
+Part one: play with "extra_cmds"
+ Power cycled XPM
+ Xaar_1001_DropVolumeTest-mono.drp
+            "hack_struct_bXaarScorpionSetPrintData": false,
+            "hack_struct_bXaarScorpionSetPrintDataUpdated": false,
+            "hack_struct_bXaarScorpionSetPrintDataParametersUpdated": false,
+            "hack_struct_bXaarScorpionSetupImageDataParametersUpdated": false,
+            "hack_struct_bXaarScorpionSetupSwatheBlockParametersUpdated": false,
+            "extra_cmds": 63  // send all sections
+ Result: As expected, it printed, but with extra drops at (-141, -4)
+ 
+ Next:
+  Power cycled XPM
+  Xaar_1001_DropVolumeTest-mono.drp
+           "hack_struct_bXaarScorpionSetPrintData": false,
+            "hack_struct_bXaarScorpionSetPrintDataUpdated": false,
+            "hack_struct_bXaarScorpionSetPrintDataParametersUpdated": false,
+            "hack_struct_bXaarScorpionSetupImageDataParametersUpdated": false,
+            "hack_struct_bXaarScorpionSetupSwatheBlockParametersUpdated": false,
+            "extra_cmds": 0  // send no sections
+  Result: Printed! Not expected; should not have printed since we sent none of the extra commands.  Sigh.  Had extra drops.  Lets try to make them go away.
+ 
+ Next:
+  No power cycle XPM
+  Xaar_1001_DropVolumeTest-mono.drp
+           "hack_struct_bXaarScorpionSetPrintData": false,
+            "hack_struct_bXaarScorpionSetPrintDataUpdated": false,
+            "hack_struct_bXaarScorpionSetPrintDataParametersUpdated": false,
+            "hack_struct_bXaarScorpionSetupImageDataParametersUpdated": false,
+            "hack_struct_bXaarScorpionSetupSwatheBlockParametersUpdated": true,
+            "extra_cmds": 0
+  Results: Pattern way off, extra drops 
+ Next:
+   No power cycle XPM
+  Xaar_1001_DropVolumeTest-mono.drp
+            "hack_struct_bXaarScorpionSetPrintData": false,
+            "hack_struct_bXaarScorpionSetPrintDataUpdated": false,
+            "hack_struct_bXaarScorpionSetPrintDataParametersUpdated": false,
+            "hack_struct_bXaarScorpionSetupImageDataParametersUpdated": true,
+            "hack_struct_bXaarScorpionSetupSwatheBlockParametersUpdated": true,
+            "extra_cmds": 0
+  Results:  Pattern way off, extra drops
+  
+ Next:
+   No power cycle XPM
+   Xaar_1001_DropVolumeTest-mono.drp
+             "hack_struct_bXaarScorpionSetPrintData": false,
+            "hack_struct_bXaarScorpionSetPrintDataUpdated": false,
+            "hack_struct_bXaarScorpionSetPrintDataParametersUpdated": true,
+            "hack_struct_bXaarScorpionSetupImageDataParametersUpdated": true,
+            "hack_struct_bXaarScorpionSetupSwatheBlockParametersUpdated": true,
+            "extra_cmds": 0
+  Results:  Pattern looks okay, ABC problem, extra drops
+  
+ Next:
+   No power cycle XPM
+   Xaar_1001_DropVolumeTest-mono.drp
+            "hack_struct_bXaarScorpionSetPrintData": false,
+            "hack_struct_bXaarScorpionSetPrintDataUpdated": true,
+            "hack_struct_bXaarScorpionSetPrintDataParametersUpdated": true,
+            "hack_struct_bXaarScorpionSetupImageDataParametersUpdated": true,
+            "hack_struct_bXaarScorpionSetupSwatheBlockParametersUpdated": true,
+            "extra_cmds": 0
+  Results:  Pattern looks okay, ABC problem, NO extra drops
+ Next:
+   No power cycle XPM  
+  Xaar_1001_DropVolumeTest-mono.drp
+            "hack_struct_bXaarScorpionSetPrintData": false,
+            "hack_struct_bXaarScorpionSetPrintDataUpdated": true,
+            "hack_struct_bXaarScorpionSetPrintDataParametersUpdated": false,
+            "hack_struct_bXaarScorpionSetupImageDataParametersUpdated": false,
+            "hack_struct_bXaarScorpionSetupSwatheBlockParametersUpdated": false,
+            "extra_cmds": 0
+  Results:  Pattern looks okay, ABC problem?, NO extra drops
+  
+  For hack_struct_bXaarScorpionSetPrintDataUpdated section:
+   Original values:
+        "RowTrailChannels":     [6, 6],
+        "PDFilter":     8,
+        "CopyCount":    [1, 1],
+        "OriginalParameters":   {
+                "LeadChannels": 6,
+                "HeadChannels": 1000,
+                "SendID":       [0, 0],                 >>> hacked: [0, 136]
+                "AllSwathesFit":        [true, true],   >>> hacked: [true, false]
+                "StartDir":     [0, 1],                 >>> hacked: [1, 0]
+                "LoopCount":    1,                      >>> hacked: 3108864
+                "MemoryBlock":  [22964, 22944],         >>> hacked: [22944, 22944]; post: [24426, 22568]
+                "FirstMemoryBlock":     [22964, 22964], >>> hacked: [22944, 22944]; post: [22944, 22944]
+                "ImageSize":    [94848, 94848],         >>> no hack; post: [94848, 256]
+                "NumberSwathes":        [1, 1],
+                "NibbleIndex":  0,
+                "bReverseSwatheOrder":  false,
+                "PrintOnce":    true,
+                "PreviousPrintSwathe":  [0, 0],
+                "NumberOfRows": 2,
+                "bBinaryBackgroundInvert":      false,
+                "SwatheStartIndex":     0,
+                "bSelectHead":  [true, true],
+                "FirstSwathe":  [true, true],
+                "LastSwathe":   [true, true],
+                "Binary":       true,
+                "Head": 0,
+                "SwatheIncrement":      1000,
+                "PrintTransportMode":   0,
+                "Enable2Bit":   false,
+                "ImageLength":  [741, 741],
+                "PrintMode":    0,
+                "SwatheMemoryCount":    [1, 1],
+                "NibbleControl":        [15, 14],
+                "SwatheBlock":  32,
+                "MemoryBlocksNeeded":   [1482, 1482],
+                "HeadType":     9,
+                "bPaletteRemap":        true,
+                "TrailChannels":        6,
+                "SubPixelDivide":       46,
+                "HeadIndex":    [0, 0],
+                "SaveSubPixelOffset":   [[0, 0], [0, 0]],
+                "DirBlock":     0,
+                "bReverseImageOrder":   false,
+                "FirstSwatheBlock":     32,
+                "GuardValue":   0,
+                "DataChannels": 500,
+                "SourceStrokeWidth":    128,
+                "EncoderDivide":        47,
+                "InterGap":     0,
+                "PreLoadSwatheBlock":   4,
+                "SubPixelOffset":       0,
+                "StoredSwathes":        [0, 0],
+                "ForwardBuffer":        true,
+                "GreyLevel":    1,
+                "SysClock":     0,
+                "NextSwatheBlock":      0,
+                "BitDifference":        1,
+                "CycleMode":    1,
+                "BiPrintKeepOdd":       false,
+                "TotalImageWidth":      [1000, 1000],
+                "ThisSwathe":   0,
+                "Spare":        0,
+                "SaveProductOffset":    [[10, 136], [10, 11]],
+                "VLDPHCount":   0,
+                "BufferReverse":        [false, true],
+                "LastSwatheInMemory":   [false, false],
+                "SeparateRows": 0,
+                "SEPDSetup":    0,
+                "ProductOffset":        0
+        },
+        "XPMSEPDSetup": [0, 0, 0, 0],
+        "Spare":        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "RowLeadChannels":      [6, 6]
+}
+
+   Hacked values:
+        UDataParams.OriginalParameters.MemoryBlock[0] = { 0x000059A0 }; //22944
+        UDataParams.OriginalParameters.MemoryBlock[1] = { 0x000059A0 }; //22944
+        UDataParams.OriginalParameters.FirstMemoryBlock[0] = { 0x000059A0 }; //22944
+        UDataParams.OriginalParameters.FirstMemoryBlock[1] = { 0x000059A0 }; //22944
+        UDataParams.OriginalParameters.StartDir[0] = { 0x00000001 };
+        UDataParams.OriginalParameters.StartDir[1] = { 0x00000000 };
+        UDataParams.OriginalParameters.LoopCount = 0x002F7000;  // 3108864
+        UDataParams.OriginalParameters.AllSwathesFit[0] = { true };
+        UDataParams.OriginalParameters.AllSwathesFit[1] = { false };
+        UDataParams.OriginalParameters.SendID[0] = { 0x00000000 };
+        UDataParams.OriginalParameters.SendID[1] = { 0x00000088 }; //136
+        UDataParams.Spare[0] = { 0x00000000 };
+        UDataParams.Spare[1] = { 0x00000000 };
+        UDataParams.Spare[2] = { 0x00000000 };
+        UDataParams.Spare[3] = { 0x00000000 };
+        UDataParams.Spare[4] = { 0x00000000 };
+        UDataParams.Spare[5] = { 0x00000000 };
+        UDataParams.Spare[6] = { 0x00000000 };
+        UDataParams.Spare[7] = { 0x00000000 };
+        
+  But then, after the call to bXaarScorpionSetPrintDataUpdated:
+  04/22/15 17:01:26.739: (XaarCmdAPI      ) [DEBUG] >>> DataParams, Before and after diff:
+{
+        "SendID[1]":    "0 -> 136",
+        "AllSwathesFit[1]":     "True -> False",
+        "StartDir[0]":  "0 -> 1",
+        "StartDir[1]":  "1 -> 0",
+        "LoopCount":    "1 -> 3.10886e+006",
+        "MemoryBlock[0]":       "22964 -> 24426",
+        "MemoryBlock[1]":       "22944 -> 22568",
+        "ImageSize[1]": "94848 -> 256",
+        "FirstMemoryBlock[0]":  "22964 -> 22944",
+        "FirstMemoryBlock[1]":  "22964 -> 22944"
+}
+
+After lunch testing...just wanted to duplicate previous run and see if we still have ABC problem.
+  Power cycle XPM
+  Xaar_1001_DropVolumeTest-mono.drp
+       "hack_struct_bXaarScorpionSetPrintData":        false,
+        "hack_struct_bXaarScorpionSetPrintDataUpdated": true,
+        "hack_struct_bXaarScorpionSetPrintDataParametersUpdated":       false,
+        "hack_struct_bXaarScorpionSetupImageDataParametersUpdated":     false,
+        "hack_struct_bXaarScorpionSetupSwatheBlockParametersUpdated":   false,
+        "extra_cmds":   0
+ Result: Pattern looks good, pretty sure no ABC problem, no extra drops!  
+ 
+ Next: Lets turn off hack_struct_bXaarScorpionSetPrintDataUpdated and see if the extra drops reappear..
+  No power cycle.
+  Xaar_1001_DropVolumeTest-mono.drp
+        "hack_struct_bXaarScorpionSetPrintData":        false,
+        "hack_struct_bXaarScorpionSetPrintDataUpdated": false,
+        "hack_struct_bXaarScorpionSetPrintDataParametersUpdated":       false,
+        "hack_struct_bXaarScorpionSetupImageDataParametersUpdated":     false,
+        "hack_struct_bXaarScorpionSetupSwatheBlockParametersUpdated":   false,
+        "extra_cmds":   0
+ Result: Pattern looks good, pretty sure no ABC problem, no extra drops! WTF!?! Okay, lets try power cycle... 
+  Power cycle XPM
+ Xaar_1001_DropVolumeTest-mono.drp
+         "hack_struct_bXaarScorpionSetPrintData":        false,
+        "hack_struct_bXaarScorpionSetPrintDataUpdated": false,
+        "hack_struct_bXaarScorpionSetPrintDataParametersUpdated":       false,
+        "hack_struct_bXaarScorpionSetupImageDataParametersUpdated":     false,
+        "hack_struct_bXaarScorpionSetupSwatheBlockParametersUpdated":   false,
+        "extra_cmds":   0
+ Result: Okay, extra drops are back! Definitely no ABC problem and pattern looks good.
+ 
+ Next:
+ No power cycle, turn on single hack:
+ Xaar_1001_DropVolumeTest-mono.drp
+            "hack_struct_bXaarScorpionSetPrintData": false,
+            "hack_struct_bXaarScorpionSetPrintDataUpdated": true,
+            "hack_struct_bXaarScorpionSetPrintDataParametersUpdated": false,
+            "hack_struct_bXaarScorpionSetupImageDataParametersUpdated": false,
+            "hack_struct_bXaarScorpionSetupSwatheBlockParametersUpdated": false,
+            "extra_cmds": 0
+ Result: Cool, back to no extra drops, no ABC problem and pattern looks good.
+ 
+ Next:
+ Power cycle XPM, turn on single hack:
+ Xaar_1001_DropVolumeTest-mono.drp
+            "hack_struct_bXaarScorpionSetPrintData": false,
+            "hack_struct_bXaarScorpionSetPrintDataUpdated": true,
+            "hack_struct_bXaarScorpionSetPrintDataParametersUpdated": false,
+            "hack_struct_bXaarScorpionSetupImageDataParametersUpdated": false,
+            "hack_struct_bXaarScorpionSetupSwatheBlockParametersUpdated": false,
+            "extra_cmds": 0
+ Result: Cool, same results.  We're good so far.  Lets try some different patterns...
+ 
+  
+ Next:
+ No power cycle.
+ g3x12_26x33.drp
+ Hack: "hack_struct_bXaarScorpionSetPrintDataUpdated": true,
+ Result: hmmm...on the trailing edge of the pattern (back) there are some drops that I don't think should be there.  better ask Whitney.
+
+ Next:
+ No power cycle.
+ Repeat:  Xaar_1001_DropVolumeTest-mono.drp
+ Hack: "hack_struct_bXaarScorpionSetPrintDataUpdated": true,
+ Result:  Bummer, yes the extra drops now seem to be on the trailing edge...
+ 
+ next:
+ No power cycle
+ Xaar_1001_DropVolumeTest-mono.drp
+             "hack_struct_bXaarScorpionSetPrintData": false,
+            "hack_struct_bXaarScorpionSetPrintDataUpdated": true,
+            "hack_struct_bXaarScorpionSetPrintDataParametersUpdated": true,
+            "hack_struct_bXaarScorpionSetupImageDataParametersUpdated": true,
+            "hack_struct_bXaarScorpionSetupSwatheBlockParametersUpdated": true,
+ Result: no extra drops, ABC
+ 
+ next:
+ No power cycle
+ Xaar_1001_DropVolumeTest-mono.drp
+             "hack_struct_bXaarScorpionSetPrintData": false,
+            "hack_struct_bXaarScorpionSetPrintDataUpdated": true,
+            "hack_struct_bXaarScorpionSetPrintDataParametersUpdated": true,
+            "hack_struct_bXaarScorpionSetupImageDataParametersUpdated": true,
+            "hack_struct_bXaarScorpionSetupSwatheBlockParametersUpdated": false,
+ Result: no extra drops, ABC
+
+ 
+ next:
+ No power cycle
+ Xaar_1001_DropVolumeTest-mono.drp
+             "hack_struct_bXaarScorpionSetPrintData": false,
+            "hack_struct_bXaarScorpionSetPrintDataUpdated": true,
+            "hack_struct_bXaarScorpionSetPrintDataParametersUpdated": true,
+            "hack_struct_bXaarScorpionSetupImageDataParametersUpdated": false,
+            "hack_struct_bXaarScorpionSetupSwatheBlockParametersUpdated": false,
+ Result: no extra drops, likely ABC problem
+ 
+ Next:
+ No power cycle, no XFD restart
+ g3x12_26x33.drp
+              "hack_struct_bXaarScorpionSetPrintData": false,
+            "hack_struct_bXaarScorpionSetPrintDataUpdated": true,
+            "hack_struct_bXaarScorpionSetPrintDataParametersUpdated": true,
+            "hack_struct_bXaarScorpionSetupImageDataParametersUpdated": false,
+            "hack_struct_bXaarScorpionSetupSwatheBlockParametersUpdated": false,
+ Result: no extra drops, likely ABC problem (can't tell from drop pattern)
+
+  No power cycle
+ g3x12_26x33.drp
+             "hack_struct_bXaarScorpionSetPrintData": false,
+            "hack_struct_bXaarScorpionSetPrintDataUpdated": true,
+            "hack_struct_bXaarScorpionSetPrintDataParametersUpdated": false,  <-- turn off, extra drops show up at end?
+            "hack_struct_bXaarScorpionSetupImageDataParametersUpdated": false,
+            "hack_struct_bXaarScorpionSetupSwatheBlockParametersUpdated": false,
+            "extra_cmds": 0
+ Result: extra drops at trailing edge!!, likely ABC problem (can't tell from drop pattern)
+
+  No power cycle
+  Xaar_1001_DropVolumeTest-mono.drp
+             "hack_struct_bXaarScorpionSetPrintData": false,
+            "hack_struct_bXaarScorpionSetPrintDataUpdated": true,
+            "hack_struct_bXaarScorpionSetPrintDataParametersUpdated": false,  
+            "hack_struct_bXaarScorpionSetupImageDataParametersUpdated": false,
+            "hack_struct_bXaarScorpionSetupSwatheBlockParametersUpdated": false,
+            "extra_cmds": 0
+ Result: extra drops at trailing edge!!, Whitney thinks no ABC problem 
+
+  No power cycle
+  Xaar_1001_DropVolumeTest-mono.drp
+             "hack_struct_bXaarScorpionSetPrintData": false,
+            "hack_struct_bXaarScorpionSetPrintDataUpdated": true,
+            "hack_struct_bXaarScorpionSetPrintDataParametersUpdated": true, <-- turn back on so I can capture the settings 
+            "hack_struct_bXaarScorpionSetupImageDataParametersUpdated": false,
+            "hack_struct_bXaarScorpionSetupSwatheBlockParametersUpdated": false,
+            "extra_cmds": 0
+ Result: No extra drops. Here are the hacks:
+ bXaarScorpionSetPrintDataParametersUpdated:
+ Original:
+ {
+        "RowTrailChannels":     [6, 6],
+        "PDFilter":     8,
+        "CopyCount":    [1, 1],
+        "OriginalParameters":   {
+
+
+                "SendID":           [0, 136],       >>> hacked1: [0, 136]        hacked2:
+                "AllSwathesFit":    [true, true],   >>> hacked1: [true, true]
+                "ImageSize":        [94848, 256],   >>> hacked1: [94848, 256]
+                "MemoryBlock":      [22944, 24426], >>> hacked1: [22944, 24426]
+                "FirstMemoryBlock": [22944, 22944], >>> hacked1: [22944, 22944]
+                "StartDir":         [1, 0],         >>> hacked1: [1, 0]
+                "DirBlock":         0,              >>> hacked1: 1
+                "LoopCount":        3108864,        >>> hacked1: 3108864
+
+            UDataParams.OriginalParameters.ImageSize[0] = { 0x00017280 }; //94848
+            UDataParams.OriginalParameters.ImageSize[1] = { 0x00000100 }; //256
+            UDataParams.OriginalParameters.ProductOffset = 0x00000088;    //136
+            UDataParams.OriginalParameters.MemoryBlock[0] = { 0x00005F6A }; //24426
+            UDataParams.OriginalParameters.MemoryBlock[1] = { 0x000059A0 }; //22944
+            UDataParams.OriginalParameters.FirstMemoryBlock[0] = { 0x000059A0 }; //22944
+            UDataParams.OriginalParameters.FirstMemoryBlock[1] = { 0x000059A0 }; //22944
+            UDataParams.OriginalParameters.StartDir[0] = { 0x00000001 };
+            UDataParams.OriginalParameters.StartDir[1] = { 0x00000000 };
+            UDataParams.OriginalParameters.DirBlock = 0x00000000;
+            UDataParams.OriginalParameters.SubPixelOffset = 0x00000000;
+            UDataParams.OriginalParameters.LoopCount = 0x002F7000; //3108864
+            UDataParams.OriginalParameters.AllSwathesFit[0] = { true };
+            UDataParams.OriginalParameters.AllSwathesFit[1] = { true };
+            UDataParams.OriginalParameters.SendID[0] = { 0x00000000 };
+            UDataParams.OriginalParameters.SendID[1] = { 0x00000088 };  //136
+
+ 
+
+                "LeadChannels": 6,
+                "HeadChannels": 1000,
+                "NumberSwathes":        [1, 1],
+                "NibbleIndex":  1,
+                "bReverseSwatheOrder":  false,
+                "PrintOnce":    true,
+                "PreviousPrintSwathe":  [0, 0],
+                "NumberOfRows": 2,
+                "bBinaryBackgroundInvert":      false,
+                "SwatheStartIndex":     0,
+                "bSelectHead":  [true, true],
+                "FirstSwathe":  [true, true],
+                "LastSwathe":   [true, true],
+                "Binary":       true,
+                "Head": 0,
+                "SwatheIncrement":      1000,
+                "PrintTransportMode":   0,
+                "Enable2Bit":   false,
+                "ImageLength":  [741, 741],
+                "PrintMode":    0,
+                "SwatheMemoryCount":    [1, 1],
+                "NibbleControl":        [15, 14],
+                "SwatheBlock":  33,
+                "MemoryBlocksNeeded":   [1482, 1482],
+                "HeadType":     9,
+                "bPaletteRemap":        true,
+                "TrailChannels":        6,
+                "SubPixelDivide":       46,
+                "HeadIndex":    [0, 0],
+                "SaveSubPixelOffset":   [[0, 0], [0, 0]],
+                "bReverseImageOrder":   false,
+                "FirstSwatheBlock":     32,
+                "GuardValue":   0,
+                "DataChannels": 500,
+                "SourceStrokeWidth":    128,
+                "EncoderDivide":        47,
+                "InterGap":     0,
+                "PreLoadSwatheBlock":   4,
+                "SubPixelOffset":       13,
+                "StoredSwathes":        [0, 0],
+                "ForwardBuffer":        true,
+                "GreyLevel":    1,
+                "SysClock":     0,
+                "NextSwatheBlock":      33,
+                "BitDifference":        1,
+                "CycleMode":    1,
+                "BiPrintKeepOdd":       false,
+                "TotalImageWidth":      [1000, 1000],
+                "ThisSwathe":   0,
+                "Spare":        0,
+                "SaveProductOffset":    [[10, 136], [10, 11]],
+                "VLDPHCount":   0,
+                "BufferReverse":        [false, true],
+                "LastSwatheInMemory":   [true, true],
+                "SeparateRows": 0,
+                "SEPDSetup":    0,
+                "ProductOffset":        126
+        },
+        "XPMSEPDSetup": [0, 0, 0, 0],
+        "Spare":        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "RowLeadChannels":      [6, 6]
+}
+UDataParams, Before and after diff:
+{
+        "FirstSwathe[1]":       "True -> False",
+        "MemoryBlock[0]":       "22944 -> 24426",
+        "MemoryBlock[1]":       "24426 -> 22944",
+        "SubPixelOffset":       "13 -> 0",
+        "ProductOffset":        "126 -> 136"
+}
+
+        if (UDataParams.OriginalParameters.NibbleIndex == 0)
+        {
+            UDataParams.OriginalParameters.ImageSize[0] = { 0x00017280 }; //94848
+            UDataParams.OriginalParameters.ImageSize[1] = { 0x00000100 }; //256
+            UDataParams.OriginalParameters.MemoryBlock[0] = { 0x000059A0 }; //22944
+            UDataParams.OriginalParameters.MemoryBlock[1] = { 0x00005F6A }; //24426
+            UDataParams.OriginalParameters.FirstMemoryBlock[0] = { 0x000059A0 }; //22944
+            UDataParams.OriginalParameters.FirstMemoryBlock[1] = { 0x000059A0 }; //22944
+            UDataParams.OriginalParameters.StartDir[0] = { 0x00000001 };
+            UDataParams.OriginalParameters.StartDir[1] = { 0x00000000 };
+            UDataParams.OriginalParameters.DirBlock = 0x00000001;
+            UDataParams.OriginalParameters.LoopCount = 0x002F7000; //3108864
+            UDataParams.OriginalParameters.AllSwathesFit[0] = { true };
+            UDataParams.OriginalParameters.AllSwathesFit[1] = { true };
+            UDataParams.OriginalParameters.SendID[0] = { 0x00000000 };
+            UDataParams.OriginalParameters.SendID[1] = { 0x00000088 };  //136
+            UDataParams.Spare[0] = { 0x00000000 };
+            UDataParams.Spare[1] = { 0x00000000 };
+            UDataParams.Spare[2] = { 0x00000000 };
+            UDataParams.Spare[3] = { 0x00000000 };
+            UDataParams.Spare[4] = { 0x00000000 };
+            UDataParams.Spare[5] = { 0x00000000 };
+            UDataParams.Spare[6] = { 0x00000000 };
+            UDataParams.Spare[7] = { 0x00000000 };
+        } else {
+            UDataParams.OriginalParameters.ImageSize[0] = { 0x00017280 }; //94848
+            UDataParams.OriginalParameters.ImageSize[1] = { 0x00000100 }; //256
+            UDataParams.OriginalParameters.ProductOffset = 0x00000088;    //136
+            UDataParams.OriginalParameters.MemoryBlock[0] = { 0x00005F6A }; //24426
+            UDataParams.OriginalParameters.MemoryBlock[1] = { 0x000059A0 }; //22944
+            UDataParams.OriginalParameters.FirstMemoryBlock[0] = { 0x000059A0 }; //22944
+            UDataParams.OriginalParameters.FirstMemoryBlock[1] = { 0x000059A0 }; //22944
+            UDataParams.OriginalParameters.StartDir[0] = { 0x00000001 };
+            UDataParams.OriginalParameters.StartDir[1] = { 0x00000000 };
+            UDataParams.OriginalParameters.DirBlock = 0x00000000;
+            UDataParams.OriginalParameters.SubPixelOffset = 0x00000000;
+            UDataParams.OriginalParameters.LoopCount = 0x002F7000; //3108864
+            UDataParams.OriginalParameters.AllSwathesFit[0] = { true };
+            UDataParams.OriginalParameters.AllSwathesFit[1] = { true };
+            UDataParams.OriginalParameters.SendID[0] = { 0x00000000 };
+            UDataParams.OriginalParameters.SendID[1] = { 0x00000088 };  //136
+            UDataParams.Spare[0] = { 0x00000000 };
+            UDataParams.Spare[1] = { 0x00000000 };
+            UDataParams.Spare[2] = { 0x00000000 };
+            UDataParams.Spare[3] = { 0x00000000 };
+            UDataParams.Spare[4] = { 0x00000000 };
+            UDataParams.Spare[5] = { 0x00000000 };
+            UDataParams.Spare[6] = { 0x00000000 };
+            UDataParams.Spare[7] = { 0x00000000 };
+        }
+
+
+
+ 
+
+
+
+  
+
+
+    
+
+ 

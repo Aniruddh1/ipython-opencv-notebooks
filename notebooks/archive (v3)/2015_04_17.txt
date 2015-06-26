@@ -1,0 +1,847 @@
+Jetting Lab: XPM Bringup
+
+Added:
+        // added 04/16 to match xdemo:
+        JSONObject out_json = new JSONObject();
+        if( XPM.bXaarScorpionSetPrintData( (int)card, printData, pdp_json, out_json ) == false) {
+            throw new XUSBException( "Could not download print data to XPM: errorcode "+XPM.XaarScorpionGetErrorValue() );
+        }
+        pdp_json = (JSONObject)out_json.get("DataParams");
+        updp_json.put("OriginalParameters", pdp_json);
+
+...but this really screwed up the pattern:  the rows had a large gap in between, and there were lots of misc drops in gap.  Removed this code block and we went back to normal pattern but with extra drops at begining.
+    
+ScorpionServer Log:
+
+militho@HSB-02-Beck-XFD /cygdrive/c/workspace
+$ bin/ScorpionServer.exe etc/ScorpionServer_config.json
+04/17/15 15:33:19.960: (Main            ) [INFO ] Loading ScorpionServer...
+04/17/15 15:33:19.960: (Main            ) [INFO ] Build stats :
+  git-sha:      70e5bf1f6c63f982507559ffb00f9816b12a92bc
+  git-branch:   refs/heads/xpm_testing_branch
+  compile user: trafferty
+  compile host: trafferty-PC
+  compile date: 2015-04-17T08:32:17
+  note:         Built using VS_v12.0,Platform=x64
+04/17/15 15:33:19.960: (Main            ) [INFO ] Loading config:
+{
+        "debug":        true,
+        "CommandProcessor":     {
+                "ipAddress":    "192.168.0.4",
+                "port": 12050,
+                "exit_on_quit": true,
+                "XML_Files":    [{
+                                "XUSB": "C:\\Xaar\\XUSB.XML"
+                        }],
+                "XaarCmdAPI":   {
+                        "dump_image_data":      true
+                }
+        }
+}
+04/17/15 15:33:19.961: (SocketTransport ) [DEBUG] Registered Receive callback: 23
+ScorpionDLL.DLL: 6.2.0.0
+XPMXUSBInterfaceDLL.dll: 1.3.0.0
+{
+        "dump_image_data":      true
+}
+04/17/15 15:33:19.961: (SocketTransport ) [DEBUG] Listening for client...
+04/17/15 15:33:32.145: (SocketTransport ) [DEBUG] Client connected from: 192.168.0.4:52290
+04/17/15 15:33:32.149: (CommandProcessor) [DEBUG] Reply ID: 1 msg size: 41
+04/17/15 15:33:32.155: (CommandProcessor) [DEBUG] Reply ID: 2 msg size: 45
+04/17/15 15:33:32.156: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionDriverLoaded...
+04/17/15 15:33:32.156: (XaarCmdAPI      ) [DEBUG] Call success.
+04/17/15 15:33:32.156: (XaarCmdAPI      ) [DEBUG] >>>>> Now calling some more ScorpionDLL functions...
+04/17/15 15:33:32.156: (XaarCmdAPI      ) [DEBUG] Actual USB's found: 0
+04/17/15 15:33:32.161: (CommandProcessor) [DEBUG] Reply ID: 3 msg size: 68
+04/17/15 15:33:32.162: (XaarCmdAPI      ) [DEBUG] Calling XaarScorpionAllowLogging: Allow=1
+04/17/15 15:33:32.166: (CommandProcessor) [DEBUG] Reply ID: 4 msg size: 67
+04/17/15 15:33:32.167: (XaarCmdAPI      ) [DEBUG] Calling XaarScorpionLogInformation...
+04/17/15 15:33:32.169: (CommandProcessor) [DEBUG] Reply ID: 5 msg size: 147
+04/17/15 15:33:32.170: (CommandProcessor) [DEBUG] setRegistrySetting: section: Common, key: EncoderDivide, value:47
+04/17/15 15:33:32.174: (CommandProcessor) [DEBUG] Reply ID: 6 msg size: 154
+04/17/15 15:33:32.175: (CommandProcessor) [DEBUG] setRegistrySetting: section: XPMSEPDSetup3, key: EncoderDivide, value:47
+04/17/15 15:33:32.179: (CommandProcessor) [DEBUG] Reply ID: 7 msg size: 154
+04/17/15 15:33:32.180: (CommandProcessor) [DEBUG] setRegistrySetting: section: Common, key: EncoderPulseMultiply, value:10
+04/17/15 15:33:32.184: (CommandProcessor) [DEBUG] Reply ID: 8 msg size: 161
+04/17/15 15:33:32.185: (CommandProcessor) [DEBUG] setRegistrySetting: section: XPMSEPDSetup3, key: EncoderPulseMultiply, value:10
+04/17/15 15:33:32.189: (CommandProcessor) [DEBUG] Reply ID: 9 msg size: 149
+04/17/15 15:33:32.190: (CommandProcessor) [DEBUG] setRegistrySetting: section: Common, key: PrescalarMultply, value:0
+04/17/15 15:33:32.194: (CommandProcessor) [DEBUG] Reply ID: 10 msg size: 157
+04/17/15 15:33:32.195: (CommandProcessor) [DEBUG] setRegistrySetting: section: XPMSEPDSetup3, key: PrescalarMultply, value:0
+04/17/15 15:33:32.198: (CommandProcessor) [DEBUG] Reply ID: 11 msg size: 144
+04/17/15 15:33:32.199: (CommandProcessor) [DEBUG] setRegistrySetting: section: Common, key: Prescaler, value:10
+04/17/15 15:33:32.202: (CommandProcessor) [DEBUG] Reply ID: 12 msg size: 151
+04/17/15 15:33:32.203: (CommandProcessor) [DEBUG] setRegistrySetting: section: XPMSEPDSetup3, key: Prescaler, value:10
+04/17/15 15:33:32.207: (CommandProcessor) [DEBUG] Reply ID: 13 msg size: 157
+04/17/15 15:33:32.208: (CommandProcessor) [DEBUG] setRegistrySetting: section: Common, key: FractionalRegValue, value:211360
+04/17/15 15:33:32.212: (CommandProcessor) [DEBUG] Reply ID: 14 msg size: 164
+04/17/15 15:33:32.213: (CommandProcessor) [DEBUG] setRegistrySetting: section: XPMSEPDSetup3, key: FractionalRegValue, value:211360
+04/17/15 15:33:32.217: (CommandProcessor) [DEBUG] Reply ID: 15 msg size: 150
+04/17/15 15:33:32.218: (CommandProcessor) [DEBUG] setRegistrySetting: section: Configuration, key: PrintOnce, value:1
+04/17/15 15:33:33.221: (CommandProcessor) [DEBUG] Reply ID: 16 msg size: 51
+04/17/15 15:33:33.222: (XaarCmdAPI      ) [DEBUG] Calling XaarScorpionReInitialiseSystem...
+04/17/15 15:33:34.322: (CommandProcessor) [DEBUG] Reply ID: 17 msg size: 45
+04/17/15 15:33:34.323: (XaarCmdAPI      ) [DEBUG] Calling XaarScorpionGetXUSBCount...
+04/17/15 15:33:34.325: (CommandProcessor) [DEBUG] Reply ID: 18 msg size: 68
+04/17/15 15:33:34.326: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionGetFPGAVersion...
+04/17/15 15:33:34.328: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.330: (CommandProcessor) [DEBUG] Reply ID: 19 msg size: 98
+04/17/15 15:33:34.331: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionSetupEncoderDirectionSEPD: Card=0, SEPD=2, Value=0
+04/17/15 15:33:34.332: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.333: (CommandProcessor) [DEBUG] Reply ID: 20 msg size: 81
+04/17/15 15:33:34.334: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionSetEncoderDivide...
+04/17/15 15:33:34.338: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.339: (CommandProcessor) [DEBUG] Reply ID: 21 msg size: 97
+04/17/15 15:33:34.340: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionEncoderPulseMultiplySEPD: Card=0, SEPD=2, Value=9
+04/17/15 15:33:34.344: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.345: (CommandProcessor) [DEBUG] Reply ID: 22 msg size: 92
+04/17/15 15:33:34.346: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionPDNoReverseSEPD: Card=0, SEPD=2, Value=0
+04/17/15 15:33:34.347: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.348: (CommandProcessor) [DEBUG] Reply ID: 23 msg size: 68
+04/17/15 15:33:34.349: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionGetFPGAVersion...
+04/17/15 15:33:34.351: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.352: (CommandProcessor) [DEBUG] Reply ID: 24 msg size: 98
+04/17/15 15:33:34.353: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionSetupEncoderDirectionSEPD: Card=1, SEPD=2, Value=0
+04/17/15 15:33:34.354: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.355: (CommandProcessor) [DEBUG] Reply ID: 25 msg size: 81
+04/17/15 15:33:34.356: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionSetEncoderDivide...
+04/17/15 15:33:34.360: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.361: (CommandProcessor) [DEBUG] Reply ID: 26 msg size: 97
+04/17/15 15:33:34.362: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionEncoderPulseMultiplySEPD: Card=1, SEPD=2, Value=9
+04/17/15 15:33:34.366: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.367: (CommandProcessor) [DEBUG] Reply ID: 27 msg size: 92
+04/17/15 15:33:34.368: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionPDNoReverseSEPD: Card=1, SEPD=2, Value=0
+04/17/15 15:33:34.369: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.370: (CommandProcessor) [DEBUG] Reply ID: 28 msg size: 45
+04/17/15 15:33:34.371: (XaarCmdAPI      ) [DEBUG] Calling XaarScorpionGetXUSBCount...
+04/17/15 15:33:34.372: (CommandProcessor) [DEBUG] Reply ID: 29 msg size: 98
+04/17/15 15:33:34.373: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionHeadPowerControl...
+04/17/15 15:33:34.385: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.386: (CommandProcessor) [DEBUG] Reply ID: 30 msg size: 62
+04/17/15 15:33:34.387: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionGetUsbOk...
+04/17/15 15:33:34.388: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.389: (CommandProcessor) [DEBUG] Reply ID: 31 msg size: 98
+04/17/15 15:33:34.390: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionHeadPowerControl...
+04/17/15 15:33:34.407: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.408: (CommandProcessor) [DEBUG] Reply ID: 32 msg size: 62
+04/17/15 15:33:34.409: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionGetUsbOk...
+04/17/15 15:33:34.410: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.412: (CommandProcessor) [DEBUG] Reply ID: 33 msg size: 133
+04/17/15 15:33:34.413: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionGetHeadType.  Cards: 12, Heads: 8
+04/17/15 15:33:34.413: (XaarCmdAPI      ) [DEBUG] Call(s) success!
+04/17/15 15:33:34.417: (CommandProcessor) [DEBUG] Reply ID: 34 msg size: 74
+04/17/15 15:33:34.418: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionGetHeadType...
+04/17/15 15:33:34.419: (CommandProcessor) [DEBUG] Reply ID: 35 msg size: 76
+04/17/15 15:33:34.420: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionGetHeadSerial...
+04/17/15 15:33:34.436: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.438: (CommandProcessor) [DEBUG] Reply ID: 36 msg size: 164
+04/17/15 15:33:34.439: (CommandProcessor) [DEBUG] setRegistrySetting: section: Common, key: ForceBinary1GreyScale2, value:1
+04/17/15 15:33:34.443: (CommandProcessor) [DEBUG] Reply ID: 37 msg size: 153
+04/17/15 15:33:34.444: (CommandProcessor) [DEBUG] setRegistrySetting: section: Configuration, key: SeparateRows, value:0
+04/17/15 15:33:34.448: (CommandProcessor) [DEBUG] Reply ID: 38 msg size: 173
+04/17/15 15:33:34.449: (CommandProcessor) [DEBUG] setRegistrySetting: section: HeadOffsetRegistersCard1, key: MirrorHead1Row1, value:0
+04/17/15 15:33:34.453: (CommandProcessor) [DEBUG] Reply ID: 39 msg size: 175
+04/17/15 15:33:34.454: (CommandProcessor) [DEBUG] setRegistrySetting: section: HeadOffsetRegistersCard1, key: DirTrueHead1Row1, value:0
+04/17/15 15:33:34.457: (CommandProcessor) [DEBUG] Reply ID: 40 msg size: 173
+04/17/15 15:33:34.458: (CommandProcessor) [DEBUG] setRegistrySetting: section: HeadOffsetRegistersCard1, key: MirrorHead1Row2, value:0
+04/17/15 15:33:34.461: (CommandProcessor) [DEBUG] Reply ID: 41 msg size: 175
+04/17/15 15:33:34.462: (CommandProcessor) [DEBUG] setRegistrySetting: section: HeadOffsetRegistersCard1, key: DirTrueHead1Row2, value:0
+04/17/15 15:33:34.465: (CommandProcessor) [DEBUG] Reply ID: 42 msg size: 76
+04/17/15 15:33:34.466: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionGetHeadStatus...
+04/17/15 15:33:34.467: (CommandProcessor) [DEBUG] Reply ID: 43 msg size: 69
+04/17/15 15:33:34.468: (XaarCmdAPI      ) [DEBUG] Calling XaarScorpionAllowLogging: Allow=1
+04/17/15 15:33:34.477: (CommandProcessor) [DEBUG] Reply ID: 44 msg size: 144
+04/17/15 15:33:34.478: (CommandProcessor) [DEBUG] setRegistrySetting: section: Common, key: GuardValue, value:0
+04/17/15 15:33:34.533: (CommandProcessor) [DEBUG] Reply ID: 45 msg size: 88
+04/17/15 15:33:34.534: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionGetHeadWaveformID...
+04/17/15 15:33:34.555: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.556: (CommandProcessor) [DEBUG] Reply ID: 46 msg size: 90
+04/17/15 15:33:34.557: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionGetHeadTCParameters...
+04/17/15 15:33:34.600: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.601: (CommandProcessor) [DEBUG] Reply ID: 47 msg size: 89
+04/17/15 15:33:34.602: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionGetHeadSampleClock...
+04/17/15 15:33:34.614: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.616: (CommandProcessor) [DEBUG] Reply ID: 48 msg size: 88
+04/17/15 15:33:34.617: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionGetHeadWaveformID...
+04/17/15 15:33:34.636: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.637: (CommandProcessor) [DEBUG] Reply ID: 49 msg size: 90
+04/17/15 15:33:34.638: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionGetHeadTCParameters...
+04/17/15 15:33:34.680: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.681: (CommandProcessor) [DEBUG] Reply ID: 50 msg size: 89
+04/17/15 15:33:34.682: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionGetHeadSampleClock...
+04/17/15 15:33:34.696: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:34.703: (CommandProcessor) [DEBUG] Reply ID: 51 msg size: 71
+04/17/15 15:33:34.704: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionGetSerialNoMapped...
+04/17/15 15:33:34.704: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:58.555: (CommandProcessor) [DEBUG] Reply ID: 52 msg size: 79
+04/17/15 15:33:58.556: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionSelectSEPD: Card=0, SEPDSelect=2
+04/17/15 15:33:58.562: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:58.563: (CommandProcessor) [DEBUG] Reply ID: 53 msg size: 72
+04/17/15 15:33:58.564: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionReloadAppXMLFileParameters...
+04/17/15 15:33:58.565: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:58.566: (CommandProcessor) [DEBUG] Reply ID: 54 msg size: 90
+04/17/15 15:33:58.567: (XaarCmdAPI      ) [DEBUG] Calling XaarScorpionGetMaxHeadBlocksXPM...
+04/17/15 15:33:58.570: (CommandProcessor) [DEBUG] Reply ID: 55 msg size: 605
+04/17/15 15:33:58.571: (XaarCmdAPI      ) [DEBUG]    bXaarScorpionSetupImageDataParametersUpdated. UpdatedPrintDataParameters:
+{
+        "RowTrailChannels":     [0, 0],
+        "OriginalParameters":   {
+                "bSelectHead":  [true, true],
+                "GreyLevel":    8,
+                "Head": 0,
+                "Binary":       false,
+                "PrintTransportMode":   1,
+                "GuardValue":   0,
+                "ImageLength":  [741, 741],
+                "AllSwathesFit":        [true, true],
+                "EncoderDivide":        46,
+                "PrintMode":    0,
+                "TotalImageWidth":      [1000, 1000],
+                "HeadType":     9,
+                "ImageSize":    [94848, 94848],
+                "NibbleIndex":  0,
+                "SubPixelDivide":       46,
+                "HeadIndex":    [0, 0],
+                "ForwardBuffer":        true,
+                "PrintOnce":    true,
+                "NumberOfRows": 2,
+                "SeparateRows": 0
+        },
+        "RowLeadChannels":      [0, 0]
+}
+04/17/15 15:33:58.571: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionSetupImageDataParametersUpdated...
+04/17/15 15:33:58.575: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:58.575: (XaarCmdAPI      ) [DEBUG] >>> UDataParams, Before and after diff:
+{
+        "RowTrailChannels[0]":  "0 -> 6",
+        "RowTrailChannels[1]":  "0 -> 6",
+        "GreyLevel":    "8 -> 1",
+        "Binary":       "False -> True",
+        "PrintTransportMode":   "1 -> 0",
+        "EncoderDivide":        "46 -> 47",
+        "RowLeadChannels[0]":   "0 -> 6",
+        "RowLeadChannels[1]":   "0 -> 6"
+}
+04/17/15 15:33:58.647: (CommandProcessor) [DEBUG] Reply ID: 56 msg size: 1703
+04/17/15 15:33:58.648: (XaarCmdAPI      ) [DEBUG]    bXaarScorpionSetPrintDataUpdated. UpdatedPrintDataParameters:
+{
+        "RowTrailChannels":     [6, 6],
+        "PDFilter":     8,
+        "CopyCount":    [1, 1],
+        "OriginalParameters":   {
+                "LeadChannels": 6,
+                "HeadChannels": 1000,
+                "SendID":       [0, 0],
+                "AllSwathesFit":        [true, true],
+                "NumberSwathes":        [1, 1],
+                "NibbleIndex":  0,
+                "bReverseSwatheOrder":  false,
+                "PrintOnce":    true,
+                "PreviousPrintSwathe":  [0, 0],
+                "NumberOfRows": 2,
+                "bBinaryBackgroundInvert":      false,
+                "SwatheStartIndex":     0,
+                "StartDir":     [0, 1],
+                "bSelectHead":  [true, true],
+                "FirstSwathe":  [true, true],
+                "LastSwathe":   [true, true],
+                "Binary":       true,
+                "Head": 0,
+                "SwatheIncrement":      1000,
+                "PrintTransportMode":   0,
+                "Enable2Bit":   false,
+                "ImageLength":  [741, 741],
+                "PrintMode":    0,
+                "SwatheMemoryCount":    [1, 1],
+                "NibbleControl":        [15, 14],
+                "SwatheBlock":  32,
+                "MemoryBlocksNeeded":   [1482, 1482],
+                "HeadType":     9,
+                "bPaletteRemap":        true,
+                "LoopCount":    1,
+                "TrailChannels":        6,
+                "SubPixelDivide":       46,
+                "HeadIndex":    [0, 0],
+                "SaveSubPixelOffset":   [[0, 0], [0, 0]],
+                "DirBlock":     0,
+                "bReverseImageOrder":   false,
+                "FirstSwatheBlock":     32,
+                "GuardValue":   0,
+                "MemoryBlock":  [22964, 22944],
+                "DataChannels": 500,
+                "SourceStrokeWidth":    128,
+                "EncoderDivide":        47,
+                "InterGap":     0,
+                "ImageSize":    [94848, 94848],
+                "PreLoadSwatheBlock":   4,
+                "SubPixelOffset":       0,
+                "StoredSwathes":        [0, 0],
+                "ForwardBuffer":        true,
+                "GreyLevel":    1,
+                "SysClock":     0,
+                "NextSwatheBlock":      0,
+                "BitDifference":        1,
+                "CycleMode":    1,
+                "BiPrintKeepOdd":       false,
+                "FirstMemoryBlock":     [22964, 22964],
+                "TotalImageWidth":      [1000, 1000],
+                "ThisSwathe":   0,
+                "Spare":        0,
+                "SaveProductOffset":    [[10, 136], [10, 11]],
+                "VLDPHCount":   0,
+                "BufferReverse":        [false, true],
+                "LastSwatheInMemory":   [false, false],
+                "SeparateRows": 0,
+                "SEPDSetup":    0,
+                "ProductOffset":        0
+        },
+        "XPMSEPDSetup": [0, 0, 0, 0],
+        "Spare":        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "RowLeadChannels":      [6, 6]
+}
+04/17/15 15:33:58.648: (XaarCmdAPI      ) [DEBUG] Fetching data from shared memory
+04/17/15 15:33:58.648: (WinSharedMem    ) [DEBUG] Recieved data from shared memory! Size: 94848
+04/17/15 15:33:58.648: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionSetPrintDataUpdated...
+04/17/15 15:33:58.651: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:58.651: (XaarCmdAPI      ) [DEBUG]   Dumping image data to file: 20150417-153358_BitMap_1.dat
+04/17/15 15:33:58.652: (XaarCmdAPI      ) [DEBUG] >>> DataParams, Before and after diff:
+{
+        "MemoryBlock[0]":       "22964 -> 24446",
+        "MemoryBlock[1]":       "22944 -> 22568",
+        "ImageSize[1]": "94848 -> 256"
+}
+04/17/15 15:33:58.654: (CommandProcessor) [DEBUG] Reply ID: 57 msg size: 96
+04/17/15 15:33:58.655: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionGetMemoryBlocks: Page=22964 Amount=1482
+04/17/15 15:33:59.072: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:33:59.075: (XaarCmdAPI      ) [DEBUG]   Dumping MemoryBlock to file: 20150417-153359_Card-0_Page-22964.dat
+04/17/15 15:34:18.354: (CommandProcessor) [DEBUG] Reply ID: 58 msg size: 1635
+04/17/15 15:34:18.355: (XaarCmdAPI      ) [DEBUG]    bXaarScorpionSetupSwatheBlockParametersUpdated. UpdatedPrintDataParameters:
+{
+        "RowTrailChannels":     [6, 6],
+        "PDFilter":     8,
+        "CopyCount":    [1, 1],
+        "OriginalParameters":   {
+                "LeadChannels": 6,
+                "HeadChannels": 1000,
+                "SendID":       [0, 0],
+                "AllSwathesFit":        [true, true],
+                "NumberSwathes":        [1, 1],
+                "NibbleIndex":  0,
+                "bReverseSwatheOrder":  false,
+                "PrintOnce":    true,
+                "PreviousPrintSwathe":  [0, 0],
+                "NumberOfRows": 2,
+                "bBinaryBackgroundInvert":      false,
+                "SwatheStartIndex":     0,
+                "StartDir":     [0, 1],
+                "bSelectHead":  [true, true],
+                "FirstSwathe":  [true, true],
+                "LastSwathe":   [true, true],
+                "Binary":       true,
+                "Head": 0,
+                "SwatheIncrement":      1000,
+                "PrintTransportMode":   0,
+                "Enable2Bit":   false,
+                "ImageLength":  [741, 741],
+                "PrintMode":    0,
+                "SwatheMemoryCount":    [1, 1],
+                "NibbleControl":        [15, 14],
+                "SwatheBlock":  32,
+                "MemoryBlocksNeeded":   [1482, 1482],
+                "HeadType":     9,
+                "bPaletteRemap":        true,
+                "LoopCount":    1,
+                "TrailChannels":        6,
+                "SubPixelDivide":       46,
+                "HeadIndex":    [0, 0],
+                "SaveSubPixelOffset":   [[0, 0], [0, 0]],
+                "DirBlock":     0,
+                "bReverseImageOrder":   false,
+                "FirstSwatheBlock":     32,
+                "GuardValue":   0,
+                "MemoryBlock":  [22964, 22944],
+                "DataChannels": 500,
+                "SourceStrokeWidth":    128,
+                "EncoderDivide":        47,
+                "InterGap":     0,
+                "ImageSize":    [94848, 94848],
+                "PreLoadSwatheBlock":   4,
+                "SubPixelOffset":       0,
+                "StoredSwathes":        [0, 0],
+                "ForwardBuffer":        true,
+                "GreyLevel":    1,
+                "SysClock":     0,
+                "NextSwatheBlock":      0,
+                "BitDifference":        1,
+                "CycleMode":    1,
+                "BiPrintKeepOdd":       false,
+                "FirstMemoryBlock":     [22964, 22964],
+                "TotalImageWidth":      [1000, 1000],
+                "ThisSwathe":   0,
+                "Spare":        0,
+                "SaveProductOffset":    [[10, 136], [10, 11]],
+                "VLDPHCount":   0,
+                "BufferReverse":        [false, true],
+                "LastSwatheInMemory":   [false, false],
+                "SeparateRows": 0,
+                "SEPDSetup":    0,
+                "ProductOffset":        0
+        },
+        "XPMSEPDSetup": [0, 0, 0, 0],
+        "Spare":        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "RowLeadChannels":      [6, 6]
+}
+04/17/15 15:34:18.355: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionSetupSwatheBlockParametersUpdated...
+04/17/15 15:34:18.355: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:34:18.356: (XaarCmdAPI      ) [DEBUG] >>> UDataParams, Before and after diff:
+{
+        "NextSwatheBlock":      "0 -> 32",
+        "LastSwatheInMemory[0]":        "False -> True"
+}
+04/17/15 15:34:18.365: (CommandProcessor) [DEBUG] Reply ID: 59 msg size: 1626
+04/17/15 15:34:18.366: (XaarCmdAPI      ) [DEBUG]    XaarScorpionLogPrintStructInfoUpdated. UpdatedPrintDataParameters:
+{
+        "RowTrailChannels":     [6, 6],
+        "PDFilter":     8,
+        "CopyCount":    [1, 1],
+        "OriginalParameters":   {
+                "LeadChannels": 6,
+                "HeadChannels": 1000,
+                "SendID":       [0, 0],
+                "AllSwathesFit":        [true, true],
+                "NumberSwathes":        [1, 1],
+                "NibbleIndex":  0,
+                "bReverseSwatheOrder":  false,
+                "PrintOnce":    true,
+                "PreviousPrintSwathe":  [0, 0],
+                "NumberOfRows": 2,
+                "bBinaryBackgroundInvert":      false,
+                "SwatheStartIndex":     0,
+                "StartDir":     [0, 1],
+                "bSelectHead":  [true, true],
+                "FirstSwathe":  [true, true],
+                "LastSwathe":   [true, true],
+                "Binary":       true,
+                "Head": 0,
+                "SwatheIncrement":      1000,
+                "PrintTransportMode":   0,
+                "Enable2Bit":   false,
+                "ImageLength":  [741, 741],
+                "PrintMode":    0,
+                "SwatheMemoryCount":    [1, 1],
+                "NibbleControl":        [15, 14],
+                "SwatheBlock":  32,
+                "MemoryBlocksNeeded":   [1482, 1482],
+                "HeadType":     9,
+                "bPaletteRemap":        true,
+                "LoopCount":    1,
+                "TrailChannels":        6,
+                "SubPixelDivide":       46,
+                "HeadIndex":    [0, 0],
+                "SaveSubPixelOffset":   [[0, 0], [0, 0]],
+                "DirBlock":     0,
+                "bReverseImageOrder":   false,
+                "FirstSwatheBlock":     32,
+                "GuardValue":   0,
+                "MemoryBlock":  [22964, 22944],
+                "DataChannels": 500,
+                "SourceStrokeWidth":    128,
+                "EncoderDivide":        47,
+                "InterGap":     0,
+                "ImageSize":    [94848, 94848],
+                "PreLoadSwatheBlock":   4,
+                "SubPixelOffset":       0,
+                "StoredSwathes":        [0, 0],
+                "ForwardBuffer":        true,
+                "GreyLevel":    1,
+                "SysClock":     0,
+                "NextSwatheBlock":      32,
+                "BitDifference":        1,
+                "CycleMode":    1,
+                "BiPrintKeepOdd":       false,
+                "FirstMemoryBlock":     [22964, 22964],
+                "TotalImageWidth":      [1000, 1000],
+                "ThisSwathe":   0,
+                "Spare":        0,
+                "SaveProductOffset":    [[10, 136], [10, 11]],
+                "VLDPHCount":   0,
+                "BufferReverse":        [false, true],
+                "LastSwatheInMemory":   [true, false],
+                "SeparateRows": 0,
+                "SEPDSetup":    0,
+                "ProductOffset":        0
+        },
+        "XPMSEPDSetup": [0, 0, 0, 0],
+        "Spare":        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "RowLeadChannels":      [6, 6]
+}
+04/17/15 15:34:18.366: (XaarCmdAPI      ) [DEBUG] Calling XaarScorpionLogPrintStructInfoUpdated...
+04/17/15 15:34:18.367: (XaarCmdAPI      ) [DEBUG] >>> UDataParams, Before and after diff:
+{
+}
+04/17/15 15:34:18.376: (CommandProcessor) [DEBUG] Reply ID: 60 msg size: 1640
+04/17/15 15:34:18.377: (XaarCmdAPI      ) [DEBUG]    bXaarScorpionSetPrintDataParametersUpdated. UpdatedPrintDataParameters:
+{
+        "RowTrailChannels":     [6, 6],
+        "PDFilter":     8,
+        "CopyCount":    [1, 1],
+        "OriginalParameters":   {
+                "LeadChannels": 6,
+                "HeadChannels": 1000,
+                "SendID":       [0, 0],
+                "AllSwathesFit":        [true, true],
+                "NumberSwathes":        [1, 1],
+                "NibbleIndex":  0,
+                "bReverseSwatheOrder":  false,
+                "PrintOnce":    true,
+                "PreviousPrintSwathe":  [0, 0],
+                "NumberOfRows": 2,
+                "bBinaryBackgroundInvert":      false,
+                "SwatheStartIndex":     0,
+                "StartDir":     [0, 1],
+                "bSelectHead":  [true, true],
+                "FirstSwathe":  [true, true],
+                "LastSwathe":   [true, true],
+                "Binary":       true,
+                "Head": 0,
+                "SwatheIncrement":      1000,
+                "PrintTransportMode":   0,
+                "Enable2Bit":   false,
+                "ImageLength":  [741, 741],
+                "PrintMode":    0,
+                "SwatheMemoryCount":    [1, 1],
+                "NibbleControl":        [15, 14],
+                "SwatheBlock":  32,
+                "MemoryBlocksNeeded":   [1482, 1482],
+                "HeadType":     9,
+                "bPaletteRemap":        true,
+                "LoopCount":    1,
+                "TrailChannels":        6,
+                "SubPixelDivide":       46,
+                "HeadIndex":    [0, 0],
+                "SaveSubPixelOffset":   [[0, 0], [0, 0]],
+                "DirBlock":     0,
+                "bReverseImageOrder":   false,
+                "FirstSwatheBlock":     32,
+                "GuardValue":   0,
+                "MemoryBlock":  [22964, 22944],
+                "DataChannels": 500,
+                "SourceStrokeWidth":    128,
+                "EncoderDivide":        47,
+                "InterGap":     0,
+                "ImageSize":    [94848, 94848],
+                "PreLoadSwatheBlock":   4,
+                "SubPixelOffset":       0,
+                "StoredSwathes":        [0, 0],
+                "ForwardBuffer":        true,
+                "GreyLevel":    1,
+                "SysClock":     0,
+                "NextSwatheBlock":      32,
+                "BitDifference":        1,
+                "CycleMode":    1,
+                "BiPrintKeepOdd":       false,
+                "FirstMemoryBlock":     [22964, 22964],
+                "TotalImageWidth":      [1000, 1000],
+                "ThisSwathe":   0,
+                "Spare":        0,
+                "SaveProductOffset":    [[10, 136], [10, 11]],
+                "VLDPHCount":   0,
+                "BufferReverse":        [false, true],
+                "LastSwatheInMemory":   [true, false],
+                "SeparateRows": 0,
+                "SEPDSetup":    0,
+                "ProductOffset":        0
+        },
+        "XPMSEPDSetup": [0, 0, 0, 0],
+        "Spare":        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "RowLeadChannels":      [6, 6]
+}
+04/17/15 15:34:18.377: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionSetPrintDataParametersUpdated...
+04/17/15 15:34:18.393: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:34:18.393: (XaarCmdAPI      ) [DEBUG] >>> UDataParams, Before and after diff:
+{
+        "FirstSwathe[0]":       "True -> False"
+}
+04/17/15 15:34:18.403: (CommandProcessor) [DEBUG] Reply ID: 61 msg size: 1635
+04/17/15 15:34:18.404: (XaarCmdAPI      ) [DEBUG]    bXaarScorpionSetupSwatheBlockParametersUpdated. UpdatedPrintDataParameters:
+{
+        "RowTrailChannels":     [6, 6],
+        "PDFilter":     8,
+        "CopyCount":    [1, 1],
+        "OriginalParameters":   {
+                "LeadChannels": 6,
+                "HeadChannels": 1000,
+                "SendID":       [0, 0],
+                "AllSwathesFit":        [true, true],
+                "NumberSwathes":        [1, 1],
+                "NibbleIndex":  1,
+                "bReverseSwatheOrder":  false,
+                "PrintOnce":    true,
+                "PreviousPrintSwathe":  [0, 0],
+                "NumberOfRows": 2,
+                "bBinaryBackgroundInvert":      false,
+                "SwatheStartIndex":     0,
+                "StartDir":     [0, 1],
+                "bSelectHead":  [true, true],
+                "FirstSwathe":  [true, true],
+                "LastSwathe":   [true, true],
+                "Binary":       true,
+                "Head": 0,
+                "SwatheIncrement":      1000,
+                "PrintTransportMode":   0,
+                "Enable2Bit":   false,
+                "ImageLength":  [741, 741],
+                "PrintMode":    0,
+                "SwatheMemoryCount":    [1, 1],
+                "NibbleControl":        [15, 14],
+                "SwatheBlock":  32,
+                "MemoryBlocksNeeded":   [1482, 1482],
+                "HeadType":     9,
+                "bPaletteRemap":        true,
+                "LoopCount":    1,
+                "TrailChannels":        6,
+                "SubPixelDivide":       46,
+                "HeadIndex":    [0, 0],
+                "SaveSubPixelOffset":   [[0, 0], [0, 0]],
+                "DirBlock":     0,
+                "bReverseImageOrder":   false,
+                "FirstSwatheBlock":     32,
+                "GuardValue":   0,
+                "MemoryBlock":  [22964, 22944],
+                "DataChannels": 500,
+                "SourceStrokeWidth":    128,
+                "EncoderDivide":        47,
+                "InterGap":     0,
+                "ImageSize":    [94848, 94848],
+                "PreLoadSwatheBlock":   4,
+                "SubPixelOffset":       0,
+                "StoredSwathes":        [0, 0],
+                "ForwardBuffer":        true,
+                "GreyLevel":    1,
+                "SysClock":     0,
+                "NextSwatheBlock":      32,
+                "BitDifference":        1,
+                "CycleMode":    1,
+                "BiPrintKeepOdd":       false,
+                "FirstMemoryBlock":     [22964, 22964],
+                "TotalImageWidth":      [1000, 1000],
+                "ThisSwathe":   0,
+                "Spare":        0,
+                "SaveProductOffset":    [[10, 136], [10, 11]],
+                "VLDPHCount":   0,
+                "BufferReverse":        [false, true],
+                "LastSwatheInMemory":   [true, false],
+                "SeparateRows": 0,
+                "SEPDSetup":    0,
+                "ProductOffset":        0
+        },
+        "XPMSEPDSetup": [0, 0, 0, 0],
+        "Spare":        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "RowLeadChannels":      [6, 6]
+}
+04/17/15 15:34:18.404: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionSetupSwatheBlockParametersUpdated...
+04/17/15 15:34:18.404: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:34:18.405: (XaarCmdAPI      ) [DEBUG] >>> UDataParams, Before and after diff:
+{
+        "SwatheBlock":  "32 -> 33",
+        "NextSwatheBlock":      "32 -> 33",
+        "LastSwatheInMemory[1]":        "False -> True"
+}
+04/17/15 15:34:18.413: (CommandProcessor) [DEBUG] Reply ID: 62 msg size: 1628
+04/17/15 15:34:18.414: (XaarCmdAPI      ) [DEBUG]    XaarScorpionLogPrintStructInfoUpdated. UpdatedPrintDataParameters:
+{
+        "RowTrailChannels":     [6, 6],
+        "PDFilter":     8,
+        "CopyCount":    [1, 1],
+        "OriginalParameters":   {
+                "LeadChannels": 6,
+                "HeadChannels": 1000,
+                "SendID":       [0, 0],
+                "AllSwathesFit":        [true, true],
+                "NumberSwathes":        [1, 1],
+                "NibbleIndex":  1,
+                "bReverseSwatheOrder":  false,
+                "PrintOnce":    true,
+                "PreviousPrintSwathe":  [0, 0],
+                "NumberOfRows": 2,
+                "bBinaryBackgroundInvert":      false,
+                "SwatheStartIndex":     0,
+                "StartDir":     [0, 1],
+                "bSelectHead":  [true, true],
+                "FirstSwathe":  [true, true],
+                "LastSwathe":   [true, true],
+                "Binary":       true,
+                "Head": 0,
+                "SwatheIncrement":      1000,
+                "PrintTransportMode":   0,
+                "Enable2Bit":   false,
+                "ImageLength":  [741, 741],
+                "PrintMode":    0,
+                "SwatheMemoryCount":    [1, 1],
+                "NibbleControl":        [15, 14],
+                "SwatheBlock":  33,
+                "MemoryBlocksNeeded":   [1482, 1482],
+                "HeadType":     9,
+                "bPaletteRemap":        true,
+                "LoopCount":    1,
+                "TrailChannels":        6,
+                "SubPixelDivide":       46,
+                "HeadIndex":    [0, 0],
+                "SaveSubPixelOffset":   [[0, 0], [0, 0]],
+                "DirBlock":     1,
+                "bReverseImageOrder":   false,
+                "FirstSwatheBlock":     32,
+                "GuardValue":   0,
+                "MemoryBlock":  [22964, 22944],
+                "DataChannels": 500,
+                "SourceStrokeWidth":    128,
+                "EncoderDivide":        47,
+                "InterGap":     0,
+                "ImageSize":    [94848, 94848],
+                "PreLoadSwatheBlock":   4,
+                "SubPixelOffset":       13,
+                "StoredSwathes":        [0, 0],
+                "ForwardBuffer":        true,
+                "GreyLevel":    1,
+                "SysClock":     0,
+                "NextSwatheBlock":      33,
+                "BitDifference":        1,
+                "CycleMode":    1,
+                "BiPrintKeepOdd":       false,
+                "FirstMemoryBlock":     [22964, 22964],
+                "TotalImageWidth":      [1000, 1000],
+                "ThisSwathe":   0,
+                "Spare":        0,
+                "SaveProductOffset":    [[10, 136], [10, 11]],
+                "VLDPHCount":   0,
+                "BufferReverse":        [false, true],
+                "LastSwatheInMemory":   [true, true],
+                "SeparateRows": 0,
+                "SEPDSetup":    0,
+                "ProductOffset":        126
+        },
+        "XPMSEPDSetup": [0, 0, 0, 0],
+        "Spare":        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "RowLeadChannels":      [6, 6]
+}
+04/17/15 15:34:18.414: (XaarCmdAPI      ) [DEBUG] Calling XaarScorpionLogPrintStructInfoUpdated...
+04/17/15 15:34:18.415: (XaarCmdAPI      ) [DEBUG] >>> UDataParams, Before and after diff:
+{
+}
+04/17/15 15:34:18.424: (CommandProcessor) [DEBUG] Reply ID: 63 msg size: 1642
+04/17/15 15:34:18.425: (XaarCmdAPI      ) [DEBUG]    bXaarScorpionSetPrintDataParametersUpdated. UpdatedPrintDataParameters:
+{
+        "RowTrailChannels":     [6, 6],
+        "PDFilter":     8,
+        "CopyCount":    [1, 1],
+        "OriginalParameters":   {
+                "LeadChannels": 6,
+                "HeadChannels": 1000,
+                "SendID":       [0, 0],
+                "AllSwathesFit":        [true, true],
+                "NumberSwathes":        [1, 1],
+                "NibbleIndex":  1,
+                "bReverseSwatheOrder":  false,
+                "PrintOnce":    true,
+                "PreviousPrintSwathe":  [0, 0],
+                "NumberOfRows": 2,
+                "bBinaryBackgroundInvert":      false,
+                "SwatheStartIndex":     0,
+                "StartDir":     [0, 1],
+                "bSelectHead":  [true, true],
+                "FirstSwathe":  [true, true],
+                "LastSwathe":   [true, true],
+                "Binary":       true,
+                "Head": 0,
+                "SwatheIncrement":      1000,
+                "PrintTransportMode":   0,
+                "Enable2Bit":   false,
+                "ImageLength":  [741, 741],
+                "PrintMode":    0,
+                "SwatheMemoryCount":    [1, 1],
+                "NibbleControl":        [15, 14],
+                "SwatheBlock":  33,
+                "MemoryBlocksNeeded":   [1482, 1482],
+                "HeadType":     9,
+                "bPaletteRemap":        true,
+                "LoopCount":    1,
+                "TrailChannels":        6,
+                "SubPixelDivide":       46,
+                "HeadIndex":    [0, 0],
+                "SaveSubPixelOffset":   [[0, 0], [0, 0]],
+                "DirBlock":     1,
+                "bReverseImageOrder":   false,
+                "FirstSwatheBlock":     32,
+                "GuardValue":   0,
+                "MemoryBlock":  [22964, 22944],
+                "DataChannels": 500,
+                "SourceStrokeWidth":    128,
+                "EncoderDivide":        47,
+                "InterGap":     0,
+                "ImageSize":    [94848, 94848],
+                "PreLoadSwatheBlock":   4,
+                "SubPixelOffset":       13,
+                "StoredSwathes":        [0, 0],
+                "ForwardBuffer":        true,
+                "GreyLevel":    1,
+                "SysClock":     0,
+                "NextSwatheBlock":      33,
+                "BitDifference":        1,
+                "CycleMode":    1,
+                "BiPrintKeepOdd":       false,
+                "FirstMemoryBlock":     [22964, 22964],
+                "TotalImageWidth":      [1000, 1000],
+                "ThisSwathe":   0,
+                "Spare":        0,
+                "SaveProductOffset":    [[10, 136], [10, 11]],
+                "VLDPHCount":   0,
+                "BufferReverse":        [false, true],
+                "LastSwatheInMemory":   [true, true],
+                "SeparateRows": 0,
+                "SEPDSetup":    0,
+                "ProductOffset":        126
+        },
+        "XPMSEPDSetup": [0, 0, 0, 0],
+        "Spare":        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        "RowLeadChannels":      [6, 6]
+}
+04/17/15 15:34:18.425: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionSetPrintDataParametersUpdated...
+04/17/15 15:34:18.441: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:34:18.441: (XaarCmdAPI      ) [DEBUG] >>> UDataParams, Before and after diff:
+{
+        "FirstSwathe[1]":       "True -> False"
+}
+04/17/15 15:34:18.443: (CommandProcessor) [DEBUG] Reply ID: 64 msg size: 96
+04/17/15 15:34:18.444: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionGetMemoryBlocks: Page=22964 Amount=1482
+04/17/15 15:34:19.131: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:34:19.134: (XaarCmdAPI      ) [DEBUG]   Dumping MemoryBlock to file: 20150417-153419_Card-0_Page-22964.dat
+04/17/15 15:34:19.138: (CommandProcessor) [DEBUG] Reply ID: 65 msg size: 95
+04/17/15 15:34:19.139: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionSetDDFSValueSEPD: Card=0, SEPD = 2, Value = 1341370
+04/17/15 15:34:19.141: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:34:19.143: (CommandProcessor) [DEBUG] Reply ID: 66 msg size: 78
+04/17/15 15:34:19.144: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionSetDDFSEnable: Card=0, Enable = 1
+04/17/15 15:34:19.146: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:34:19.147: (CommandProcessor) [DEBUG] Reply ID: 67 msg size: 82
+04/17/15 15:34:19.148: (XaarCmdAPI      ) [DEBUG] >>>>>>>>> First, calling a bunch of scorpion calls
+04/17/15 15:34:19.197: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionSetPDInternalSEPD: Card=0, Enable=0
+04/17/15 15:34:19.198: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:34:19.199: (CommandProcessor) [DEBUG] Reply ID: 68 msg size: 62
+04/17/15 15:34:19.200: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionXUSBBusy: Card=0
+04/17/15 15:34:19.200: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:34:19.201: (CommandProcessor) [DEBUG] Reply ID: 69 msg size: 62
+04/17/15 15:34:19.202: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionXUSBBusy: Card=0
+04/17/15 15:34:19.202: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:34:19.203: (CommandProcessor) [DEBUG] Reply ID: 70 msg size: 95
+04/17/15 15:34:19.204: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionEnablePrintMode: Card=0, PrintMask=3, Mode = 1
+04/17/15 15:34:19.207: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:34:19.208: (CommandProcessor) [DEBUG] Reply ID: 71 msg size: 62
+04/17/15 15:34:19.209: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionXUSBBusy: Card=0
+04/17/15 15:34:19.209: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:34:19.671: (CommandProcessor) [DEBUG] Reply ID: 72 msg size: 62
+04/17/15 15:34:19.672: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionXUSBBusy: Card=0
+04/17/15 15:34:19.672: (XaarCmdAPI      ) [DEBUG] Call success!
+04/17/15 15:34:19.673: (CommandProcessor) [DEBUG] Reply ID: 73 msg size: 96
+04/17/15 15:34:19.674: (XaarCmdAPI      ) [DEBUG] Calling bXaarScorpionEnablePrintMode: Card=0, PrintMask=3, Mode = 0
+04/17/15 15:34:19.707: (XaarCmdAPI      ) [DEBUG] Call success!
+
+    

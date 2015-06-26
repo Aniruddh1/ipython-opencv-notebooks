@@ -1,0 +1,53 @@
+Images from MR tool:
+
+No chrome:
+MRTool_fringe1.bmp
+
+With chrome:
+Z-pos 0.432 BP +0.007  ZHLevel 0.006 -0.013 0.007.bmp
+Z-pos 0.4345 BP -0.005  ZHLevel 0.006 -0.013 0.007.bmp
+Z-pos 0.435 BP +0.0  ZHLevel 0.006 -0.013 0.007.bmp
+
+
+Jin's email:
+
+Tom,
+
+We have multiple fringe images generated from MR-alpha tool.
+Images are with no-chrome replica, which may not provide sufficient reflection for well leveled plates
+Machining-surface of the replica chuck is also confusing the image.
+
+When replica is coated with a thin Chrome, it will significantly reduce the machining surface images.
+
+NR2 tool will have antireflection coating for this area.
+
+Please read what Chris explained below.
+
+You may start with what I separately attached here.
+
+Regards,
+
+Jin
+
+From: Chris Jones
+Sent: Thursday, April 02, 2015 4:42 PM
+To: Jin Choi
+Cc: Andrew Eckert; Jeff Klein
+Subject: Fringe images from MR
+
+Jin,
+
+Andy, Jeff and I made our first attempt to capture fringe images from the MR tool this afternoon.  A rigid master loaded on Zhead.  (No Chrome)  A replica blank loaded on replica chuck (No Chrome)
+
+We first adjusted zhead position until we could clearly see fringes.  The nominal replica backpressure was 0. (Vented)  The nominal Y slope of Zhead was -0.007 (units?  uRad?)
+
+Once the zhead position was set, we then adjusted replica backpressure to attempt to remove the circular signature observed to minimize the number of fringes across the field.  We then adjusted the Y slope of the Zhead to better center the fringes on the field which appeared to be aggregated at the bottom of the field at first. 
+
+\\apps\Replication\MR5000\_MR5000-01 Alpha\Spreadcam Images\2015\APR\2015-04-02 Fringe Testing\
+
+Please review and let us know if this is good enough. 
+
+Chris
+
+ 
+
