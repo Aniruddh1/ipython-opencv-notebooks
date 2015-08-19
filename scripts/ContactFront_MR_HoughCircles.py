@@ -455,7 +455,7 @@ thresh_val = 7
 
 #image_folder_lst = ['../projects/contact_front/MR_NewCam']
 image_folder_lst = ['../projects/contact_front/MR_NewCam/all']
-#image_folder_lst = ['../projects/contact_front/MR_NewCam/transition_set']
+#image_folder_lst = ['../projects/contact_front/MR_NewCam/transitionSet']
 
 file_spec = '2015-08-04_DFI28-*.png'
 glob_spec = "%s/%s" % (image_folder_lst[0], file_spec)
@@ -465,6 +465,9 @@ image_files = sorted(image_files)
 start_num = 1
 #bg_img = eng.images[start_num-1].copy()
 bg_img = cv2.imread(image_files[start_num-1], -1)
+
+
+
 bg_img = cv2.GaussianBlur(bg_img, (5, 5), 0)
 (rows, cols) = bg_img.shape[:2]
 center = (rows/2, cols/2)
