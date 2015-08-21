@@ -1,11 +1,8 @@
+#!/usr/bin/env python
 
-# coding: utf-8
-
-# In[1]:
-
-get_ipython().magic(u'matplotlib')
-get_ipython().magic(u'load_ext autoreload')
-get_ipython().magic(u'autoreload 2')
+#~ get_ipython().magic(u'matplotlib')
+#~ get_ipython().magic(u'load_ext autoreload')
+#~ get_ipython().magic(u'autoreload 2')
 import cv2
 #import scipy.ndimage
 import numpy as np
@@ -454,7 +451,8 @@ verbose = True
 thresh_val = 7  
 
 #image_folder_lst = ['../projects/contact_front/MR_NewCam']
-image_folder_lst = ['../projects/contact_front/MR_NewCam/all']
+#image_folder_lst = ['../projects/contact_front/MR_NewCam/all']
+image_folder_lst = ['../projects/contact_front/MR_NewCam/startAtFirstCircle']
 #image_folder_lst = ['../projects/contact_front/MR_NewCam/transitionSet']
 
 file_spec = '2015-08-04_DFI28-*.png'
