@@ -69,8 +69,8 @@ def fig2data( fig ):
     #buf = np.roll ( buf, 3, axis = 2 )
     return buf
         
-class Image_Engine:
-    """ Image Engine
+class Image_List:
+    """ Image List
         
         Parses a file spec, possibly sorts them, and reads them into an image list.
         user can then use next, prev methods to iterate through images.
@@ -129,3 +129,44 @@ class Image_Engine:
 
     def images(self):
         return self.images      
+
+class Image_Engine:
+    """ Image Engine
+    """
+    def __init__(self, file_spec, is_glob, color=False):
+        self.is_glob = is_glob
+        if self.is_glob:
+            self.file_spec = file_spec
+            self.image_files = glob.glob(self.file_spec)
+            self.image_files = sorted(self.image_files)
+            print "Image Engine initialized with ", file_spec
+            print " Total images: ", len(self.image_files)
+        else:
+            self.cap = cv2.VideoCapture(file_spec)
+            print "Image Engine initialized with ", file_spec
+
+        self.image_idx = 0
+
+    def next(self):
+        if self.is_glob:
+            if self.image_idx < len( self.image_files ):
+                img = cv2.imread(self.image_files[self.image_idx], -1)
+                ret = True
+                self.image_idx += 1
+            else:
+                ret, img = False, None
+        else:
+            if self.cap.isOpened():
+                ret, img = self.cap.read()
+                if ret:
+                    self.image_idx += 1
+            else:
+                ret, img = False, None
+        return ret, img
+    
+    def idx(self):
+        return self.image_idx
+
+    def cleanup(self):
+        if not self.is_glob:
+            self.cap.release()

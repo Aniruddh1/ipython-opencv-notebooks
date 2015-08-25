@@ -359,14 +359,16 @@ def calcChanMeans(img):
     chan3_mean = np.abs(np.mean(chan3))
     return (chan1_mean, chan2_mean, chan3_mean)
 
-def findEllipse(img, center, diag_len, verbose=False, show_plots=False):
-    (rows, cols) = img.shape[:2]
-    debug_img = np.zeros((rows, cols, 3), np.uint8)
+def findEllipse(img, seed_data, verbose=False, show_plots=False):
+    debug_img = np.zeros(seed_data['img_dims'], np.uint8)
     debug_img[:,:,0] = img[:,:]
     debug_img[:,:,1] = img[:,:]
     debug_img[:,:,2] = img[:,:]
+    
+    centerYX  = seed_data['approx_center_yx']
+    diag_len  = seed_data['approx_diameter'] 
 
-    dia = estimateCircleDiameter2(img, center, diag_len, verbose, show_plots)
+    dia = estimateCircleDiameter2(img, centerYX, diag_len, verbose, show_plots)
     if dia == -99:
         print " !! estimated cirle diameters (height vs width) too large"
         ellipse = ((-99, -99), (0,0), 0)
@@ -381,12 +383,10 @@ def findEllipse(img, center, diag_len, verbose=False, show_plots=False):
     min_dist = 20    # minimum distance between detected centers
     param1 = 60      # upper threshold for the internal Canny edge detector
     param2 = 30      # threshold for center detection.
-    if False:
-        minRadius = 300
-        maxRadius = 340
-    else:
-        minRadius = int(dia/2)
-        maxRadius = int(dia/2)+100 
+    minRadius = int(dia/2)
+    maxRadius = int(dia/2)+100
+    #minRadius = int(dia/2) - int(int(dia/2) * 0.10)  
+    #maxRadius = int(dia/2) + int(int(dia/2) * 0.20)
 
     circles = cv2.HoughCircles(img,cv2.HOUGH_GRADIENT, dp, min_dist,
                                param1=param1, param2=param2, 
@@ -403,14 +403,12 @@ def findEllipse(img, center, diag_len, verbose=False, show_plots=False):
         #circles = np.uint16(np.around(circles, 0))
         circles = np.round(circles[0, :]).astype("int")
 
-        #print circles
         def getKey(item):
             return item[2]
-        circles = sorted(circles, key=getKey)
-        #print circles
+        circles = sorted(circles, key=getKey)  # sort circles based on radius (item[2])
 
-        pt_clusters=[ [], [], [], [], [], [], [] ]
-        pt_averages=[  ]
+        pt_clusters=[ []  for x in xrange(7) ]
+        pt_averages=[ ]
 
         if numFound <= 2:
             numToUse = numFound
@@ -450,3 +448,113 @@ def findEllipse(img, center, diag_len, verbose=False, show_plots=False):
         print " !! No circles found..."
         ellipse = ((-99, -99), (0,0), 0)
     return ellipse, debug_img
+
+def processImages_HoughCircles(eng, delay_s, do_plot, verbose):
+    stats = {}
+    stats['areas'] = []
+    stats['center_pts']=[]
+    stats['chan_means'] = []
+    
+    thresh_val = 5
+
+    ret, bg_img = eng.next()
+    if not ret:
+        return ret, stats
+
+    bg_img_orig = bg_img.copy()
+    bg_img = cv2.GaussianBlur(bg_img, (5, 5), 0)
+    (rows, cols) = bg_img.shape[:2]
+    centerYX = (rows/2, cols/2)
+    width = cols
+    height = rows
+    diag_len = int(np.hypot(rows, cols))
+
+    if do_plot: 
+        print "Plotting is on!!"
+        cv2.namedWindow('Images', cv2.WINDOW_NORMAL)
+
+    ret, fg_img = eng.next()
+    while ret:
+        img_idx = eng.idx()
+
+        print "---------------------------------------------------------------------"
+        print "FG img rows,cols:", fg_img.shape[:2]
+
+        # let's first analyze a small ROI at the center point
+        fg_img_converted = cv2.cvtColor(fg_img, cv2.COLOR_BGR2HSV)
+        (rows, cols) = fg_img_converted.shape[:2]
+        cp = (int(centerYX[0]), int(centerYX[1]))
+        fg_img_converted_roi = fg_img_converted[cp[1]-10:cp[1]+10, cp[0]-10:cp[0]+10]  #np slice: [startY:endY, startX:endX]     
+        chan_means = calcChanMeans(fg_img_converted_roi)
+        stats['chan_means'].append( (chan_means[0], chan_means[1], chan_means[2]) )
+
+        img_full = deltaImage(bg_img, fg_img, thresh_val)
+
+        print("%sImage index: [%d]%s" % (util.BLUE, img_idx, util.RESET))
+        print("ROI center: (%d, %d), width: %d, height: %d" % (centerYX[0], centerYX[1], width, height))
+        #img = extractROI(img_full, (int(centerYX[0]), int(centerYX[1])), int(width), int(height))
+        img = img_full
+        #print "  >> extracted img size: ", img.shape[:2]
+
+        seed_data = {}
+        seed_data['img_dims'] = (rows, cols, 3)
+        seed_data['approx_center_yx'] = centerYX
+        seed_data['approx_diameter']  = diag_len
+        seed_data['diameter_tolerance']  = 0.20
+         
+        ellipse, debug = findEllipse(img, seed_data, verbose, False)
+        
+        if ellipse[0][0] == -99:
+            print("%s Unable to find contact area, Image index: (%d)%s" % (util.RED, img_idx, util.RESET))
+            stats['areas'].append(np.nan)
+            stats['center_pts'].append( (np.nan, np.nan) )
+            
+            if True:
+                #bg_img = bg_img_orig
+                #bg_img = cv2.GaussianBlur(bg_img, (5, 5), 0)
+                bg_img = cv2.GaussianBlur(fg_img, (5, 5), 0)
+                (rows, cols) = bg_img.shape[:2]
+                centerYX = (rows/2, cols/2)
+                width = cols
+                height = rows
+                diag_len = int(np.hypot(rows, cols))
+                        
+            if do_plot: output = np.concatenate((fg_img, debug), axis=1)
+            
+            ret, fg_img = eng.next()
+
+        else:
+            print ellipse
+            pad = 150
+            #if ellipse[2] == 0:
+            if True:
+                plot_center = ((centerYX[0] + ellipse[0][1] - height/2), (centerYX[1] + ellipse[0][0] - width/2))
+                centerYX = ((0*centerYX[0] + ellipse[0][1] - 0*height/2), (0*centerYX[1] + ellipse[0][0] - 0*width/2))
+            elif ellipse[2] == 90:
+                centerYX = ((0*centerYX[0] + ellipse[0][0] - 0*width/2), (0*centerYX[1] + ellipse[0][1] - 0*height/2))
+    #         width = ellipse[1][0] + pad if (ellipse[1][0] + pad) <= cols else cols
+    #         height = ellipse[1][1] + pad if (ellipse[1][1] + pad) <= rows else rows
+            approx_area = (np.pi * np.hypot(ellipse[1][0]/2, ellipse[1][1]/2))
+            diag_len = int(np.max(ellipse[1]))
+            
+            stats['areas'].append(approx_area)
+            stats['center_pts'].append( (centerYX[1], centerYX[0]) ) # append tuple
+
+            print("%s Success! Contact area: %d %s" % (util.GREEN, approx_area, util.RESET))
+
+            if do_plot: 
+                overlay = fg_img.copy()            
+                #cv2.ellipse(overlay,(center, ellipse[1], ellipse[2]),(255,0,0),4) #cv2.ellipse(img, (centerX,centerY), (width,height), 0, 0, 180, color, lt)
+                cv2.ellipse(overlay,((centerYX[1], centerYX[0]), ellipse[1], ellipse[2]),(255,0,0),4) #cv2.ellipse(img, (centerX,centerY), (width,height), 0, 0, 180, color, lt)
+                cv2.putText(overlay, ("%d"%(approx_area)), (int(centerYX[0])-100, int(centerYX[1])), cv2.FONT_HERSHEY_DUPLEX, 2, util.green, 3)
+                output = np.concatenate((overlay, debug), axis=1)
+
+            bg_img = cv2.GaussianBlur(fg_img, (5, 5), 0)
+            ret, fg_img = eng.next()
+            
+        if do_plot: 
+            cv2.imshow('Images', output)
+            if cv2.waitKey(int(delay_s*1000)) & 0xFF == ord('q'):
+                break
+
+    return True, stats
