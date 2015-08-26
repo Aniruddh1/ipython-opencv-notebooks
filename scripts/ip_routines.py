@@ -594,23 +594,50 @@ def processImages_CumSumDiff(eng, delay_s, do_plot, verbose):
     if not ret:
         return ret, stats
 
-    cum_img = np.zeros(bg_img.shape[:2], np.bool)
-    total_size = cum_img.size
+    if do_plot: 
+        print "Plotting is on!!"
+        cv2.namedWindow('Images', cv2.WINDOW_NORMAL)
 
+    cum_img_bool = np.zeros(bg_img.shape[:2], np.bool)
+    total_size = cum_img_bool.size
+    print("[%d] Background Area: %d" % (eng.idx(), total_size))
+
+    thresh_val = 6
+    kernel_size = 15
     ret, fg_img = eng.next()
     while ret:
-        delta_img = deltaImage(bg_img, fg_img, thresh_val=5)
-        delta_img_blurred = cv2.GaussianBlur(delta_img, (55, 55), 0)
+        delta_img = deltaImage(bg_img, fg_img, thresh_val)
+        delta_img_blurred = cv2.GaussianBlur(delta_img, (kernel_size, kernel_size), 0)
 
-        before_cnt = np.count_nonzero(cum_img)
-        cum_img = np.logical_or(cum_img, delta_img_blurred)
-        after_cnt = np.count_nonzero(cum_img)
+        before_cnt = np.count_nonzero(cum_img_bool)
+        cum_img_bool = np.logical_or(cum_img_bool, delta_img_blurred)
+        after_cnt = np.count_nonzero(cum_img_bool)
 
         area  = total_size - after_cnt
-        delta = after_cnt - before_cnt
+        delta = before_cnt - after_cnt 
         stats['areas'].append(area)
         stats['deltas'].append(delta)
         print("[%d] Area: %d, Delta: %d" % (eng.idx(), area, delta))
+
+        if do_plot: 
+            overlay = fg_img.copy()
+            (rows, cols) = overlay.shape[:2]
+            cum_img = np.uint(cum_img_bool) * 255
+            debug_img = np.zeros((rows, cols*2, 3), np.uint8)
+            debug_img[:,0:cols,0] = delta_img_blurred[:,:]
+            debug_img[:,0:cols,1] = delta_img_blurred[:,:]
+            debug_img[:,0:cols,2] = delta_img_blurred[:,:]
+            debug_img[:,cols:,0] = cum_img[:,:]
+            debug_img[:,cols:,1] = cum_img[:,:]
+            debug_img[:,cols:,2] = cum_img[:,:]
+            centerXY = (cols/2, rows/2)
+            radius = int(np.sqrt(area/np.pi))
+            cv2.circle(overlay, centerXY, radius, (255,0,0), 4) #cv2.circle(img, centerXY, radius, color[, thickness[, lineType[, shift]]])
+            cv2.putText(overlay, ("%d (%d)"%(area, delta)), (int(centerXY[0])-200, int(centerXY[1])), cv2.FONT_HERSHEY_DUPLEX, 2, util.green, 3)
+            output = np.concatenate((overlay, debug_img), axis=1)
+            cv2.imshow('Images', output)
+            if cv2.waitKey(int(delay_s*1000)) & 0xFF == ord('q'):
+                break
 
         bg_img = fg_img
         ret, fg_img = eng.next()
