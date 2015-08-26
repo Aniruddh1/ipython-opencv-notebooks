@@ -310,7 +310,7 @@ def estimateCircleDiameter2(img, center, diag_len, verbose, show_plots=False):
     
     dia_np=np.array(dia)
     delta = np.abs(dia_np.mean() - diag_len)
-    percent_diff =  np.abs(diag_len - dia_np.mean()) / ((dia_np.mean() + diag_len)/2.0)
+    #percent_diff =  np.abs(diag_len - dia_np.mean()) / ((dia_np.mean() + diag_len)/2.0)
     
     if dia_np.std() > (dia_np.max() * 0.2):
         found = False
@@ -380,7 +380,7 @@ def findEllipse(img, seed_data, verbose=False, show_plots=False):
     
     method = cv2.HOUGH_GRADIENT
     dp = 1           # inverse ratio of resolution
-    min_dist = 20    # minimum distance between detected centers
+    min_dist = 10    # minimum distance between detected centers
     param1 = 60      # upper threshold for the internal Canny edge detector
     param2 = 30      # threshold for center detection.
     minRadius = int(dia/2)
@@ -412,10 +412,12 @@ def findEllipse(img, seed_data, verbose=False, show_plots=False):
 
         if numFound <= 2:
             numToUse = numFound
-        elif numFound < 2 and numFound <= 6:
+        elif numFound > 2 and numFound <= 6:
             numToUse = int(numFound*0.8)
+        elif numFound >= 15:
+            numToUse = 15
         else:
-            numToUse = int(numFound*0.2)
+            numToUse = int(numFound*0.6)
             
         # loop over the (x, y) coordinates and radius of the circles
         for (x, y, r) in circles[0:numToUse]:
@@ -444,9 +446,27 @@ def findEllipse(img, seed_data, verbose=False, show_plots=False):
         ellipse = cv2.fitEllipse(ellipse_fit_pts) 
         #if verbose: print "Ellipse: ", ellipse
         cv2.ellipse(debug_img,ellipse,(255,0,0),4)
+        
+        if seed_data['found_first']:
+            new_diag_len = int(np.hypot(ellipse[1][0], ellipse[1][1]))
+            if new_diag_len <= 0 or diag_len <= 0:
+                print " !! No more circles found..."
+                ellipse = ((-99, -99), (0,0), 0)
+                
+            percent_diff =  (diag_len - new_diag_len) / ((new_diag_len + diag_len)/2.0)
+            if percent_diff > 0.0:
+                print("%sEllipse diag percent_diff getting smaller: %.3f (prev=%.2f, new=%.2f)%s" % (util.BLUE, percent_diff, diag_len, new_diag_len, util.RESET))
+            elif percent_diff <= -0.1:
+                print("%sEllipse diag percent_diff getting bigger BY TOO MUCH : %.3f (prev=%.2f, new=%.2f)%s" % (util.RED, percent_diff, diag_len, new_diag_len, util.RESET))
+                ellipse = ((-99, -99), (0,0), 0)
+            else:
+                print("%sEllipse diag percent_diff getting bigger : %.3f (prev=%.2f, new=%.2f)%s" % (util.GREEN, percent_diff, diag_len, new_diag_len, util.RESET))
+                
     else:
         print " !! No circles found..."
         ellipse = ((-99, -99), (0,0), 0)
+        
+        
     return ellipse, debug_img
 
 def processImages_HoughCircles(eng, delay_s, do_plot, verbose):
@@ -455,7 +475,7 @@ def processImages_HoughCircles(eng, delay_s, do_plot, verbose):
     stats['center_pts']=[]
     stats['chan_means'] = []
     
-    thresh_val = 5
+    thresh_val = 7
 
     ret, bg_img = eng.next()
     if not ret:
@@ -473,6 +493,9 @@ def processImages_HoughCircles(eng, delay_s, do_plot, verbose):
         print "Plotting is on!!"
         cv2.namedWindow('Images', cv2.WINDOW_NORMAL)
 
+    seed_data = {}
+    seed_data['found_first']  = False
+    
     ret, fg_img = eng.next()
     while ret:
         img_idx = eng.idx()
@@ -496,7 +519,6 @@ def processImages_HoughCircles(eng, delay_s, do_plot, verbose):
         img = img_full
         #print "  >> extracted img size: ", img.shape[:2]
 
-        seed_data = {}
         seed_data['img_dims'] = (rows, cols, 3)
         seed_data['approx_center_yx'] = centerYX
         seed_data['approx_diameter']  = diag_len
@@ -524,6 +546,8 @@ def processImages_HoughCircles(eng, delay_s, do_plot, verbose):
             ret, fg_img = eng.next()
 
         else:
+            seed_data['found_first']  = True
+
             print ellipse
             pad = 150
             #if ellipse[2] == 0:
@@ -535,8 +559,10 @@ def processImages_HoughCircles(eng, delay_s, do_plot, verbose):
     #         width = ellipse[1][0] + pad if (ellipse[1][0] + pad) <= cols else cols
     #         height = ellipse[1][1] + pad if (ellipse[1][1] + pad) <= rows else rows
             approx_area = (np.pi * np.hypot(ellipse[1][0]/2, ellipse[1][1]/2))
-            diag_len = int(np.max(ellipse[1]))
             
+            #diag_len = int(np.max(ellipse[1]))
+            diag_len = int(np.hypot(ellipse[1][0], ellipse[1][1]))
+
             stats['areas'].append(approx_area)
             stats['center_pts'].append( (centerYX[1], centerYX[0]) ) # append tuple
 
@@ -557,4 +583,35 @@ def processImages_HoughCircles(eng, delay_s, do_plot, verbose):
             if cv2.waitKey(int(delay_s*1000)) & 0xFF == ord('q'):
                 break
 
+    return True, stats
+
+def processImages_CumSumDelta(eng, delay_s, do_plot, verbose):
+    stats = {}
+    stats['areas'] = []
+    stats['deltas'] = []
+    
+    ret, bg_img = eng.next()
+    if not ret:
+        return ret, stats
+
+    cum_img = np.zeros(bg_img.shape[:2], np.bool)
+    total_size = cum_img.size
+
+    ret, fg_img = eng.next()
+    while ret:
+        delta_img = deltaImage(bg_img, fg_img, thresh_val=5)
+        delta_img_blurred = cv2.GaussianBlur(delta_img, (55, 55), 0)
+
+        before_cnt = np.count_nonzero(cum_img)
+        cum_img = np.logical_or(cum_img, delta_img_blurred)
+        after_cnt = np.count_nonzero(cum_img)
+
+        area  = total_size - after_cnt
+        delta = after_cnt - before_cnt
+        stats['areas'].append(area)
+        stats['deltas'].append(delta)
+        print("[%d] Area: %d, Delta: %d" % (eng.idx(), area, delta))
+
+        bg_img = fg_img
+        ret, fg_img = eng.next()
     return True, stats
