@@ -585,7 +585,7 @@ def processImages_HoughCircles(eng, delay_s, do_plot, verbose):
 
     return True, stats
 
-def processImages_CumSumDelta(eng, delay_s, do_plot, verbose):
+def processImages_CumSumDiff(eng, delay_s, do_plot, verbose):
     stats = {}
     stats['areas'] = []
     stats['deltas'] = []

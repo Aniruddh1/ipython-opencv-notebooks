@@ -19,11 +19,13 @@ def main():
     parser = argparse.ArgumentParser(description='Contact Front estimation from video file or glob spec of image files')
     parser.add_argument('-f', dest='video_file', type=str, help='Input file path (MP4, AVI, etc)')
     parser.add_argument('-g', dest='glob_spec',  type=str, help='Glob spec of image files to process (/path/to/folder/2015-08-04_DFI28-*.png)')
+    parser.add_argument('-s', dest='strategy',  type=str, help='Stragtegy to use (supported: HoughCircle | CumSumDiff)')
     parser.add_argument('-d', dest='delay_s', type=float, default=0.020, help='Delay between frames in seconds (default: 0.02)')
     parser.add_argument('-v', dest='verbose', action='store_true', help='Run in verbose mode (default: True)')
     parser.add_argument('--plot', dest='do_plot', action='store_true', help='Do plot data (default: True)')
     parser.add_argument('--no-plot', dest='do_plot', action='store_false', help='Do NOT plot data')
     parser.set_defaults(video_file='')
+    parser.set_defaults(strategy='HoughCircle')
     parser.set_defaults(glob_spec='')
     parser.set_defaults(do_plot=True)
     parser.set_defaults(verbose=True)
@@ -32,16 +34,23 @@ def main():
     if len(args.glob_spec) > 0:
         eng = util.Image_Engine(args.glob_spec, is_glob=True)
         p, n = os.path.split(args.glob_spec)
-        result_name = n.replace('-*', '').split('.')[0]
+        result_name = n.replace('-*', '').split('.')[0] + '_' + args.strategy
     elif len(args.video_file) > 0:
         eng = util.Image_Engine(args.video_file, is_glob=False)
         p, n = os.path.split(args.video_file)
-        result_name = n.split('.')[0]
+        result_name = n.split('.')[0] + '_' + args.strategy
     else:
         parser.print_help()
         sys.exit(1)
 
-    ret, stats = ip.processImages_HoughCircles(eng=eng, delay_s=args.delay_s, do_plot=args.do_plot, verbose=args.verbose)
+    if args.strategy is 'HoughCircle':
+        ret, stats = ip.processImages_HoughCircles(eng=eng, delay_s=args.delay_s, do_plot=args.do_plot, verbose=args.verbose)
+    elif args.strategy is 'CumSumDiff':
+        ret, stats = ip.processImages_CumSumDiff(eng=eng, delay_s=args.delay_s, do_plot=args.do_plot, verbose=args.verbose)
+    else:
+        parser.print_help()
+        sys.exit(1)
+
     if not ret:
         print "!! Error processing images! ", result_name
 
