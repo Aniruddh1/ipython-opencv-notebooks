@@ -3,9 +3,14 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
-red = (255, 0, 0)
+blue = (255, 0, 0)
+navy = (128, 0, 0)
+gray = (144, 128, 112)
 green = (0, 255, 0)
-blue = (0, 0, 255)
+red = (0, 0, 255)
+yellow = (0, 255, 255)
+magenta = (238, 0, 238)
+orange = (0, 154, 238)
 
 BLACK = '\033[30m'
 RED = '\033[31m'

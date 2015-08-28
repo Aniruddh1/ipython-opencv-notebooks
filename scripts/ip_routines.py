@@ -469,13 +469,14 @@ def findEllipse(img, seed_data, verbose=False, show_plots=False):
         
     return ellipse, debug_img
 
-def processImages_HoughCircles(eng, delay_s, do_plot, verbose):
+def processImages_HoughCircles(eng, delay_s, do_plot, verbose, capture_video_filename):
     stats = {}
     stats['areas'] = []
     stats['center_pts']=[]
     stats['chan_means'] = []
     
-    thresh_val = 7
+    thresh_val = 5
+    kernel_size = 55
 
     ret, bg_img = eng.next()
     if not ret:
@@ -489,9 +490,12 @@ def processImages_HoughCircles(eng, delay_s, do_plot, verbose):
     height = rows
     diag_len = int(np.hypot(rows, cols))
 
+    cum_img_bool = np.zeros(bg_img.shape[:2], np.bool)
+    total_size = cum_img_bool.size
+
     if do_plot: 
         print "Plotting is on!!"
-        cv2.namedWindow('Images', cv2.WINDOW_NORMAL)
+        cv2.namedWindow('Images', cv2.WINDOW_AUTOSIZE)   #cv2.WINDOW_NORMAL
 
     seed_data = {}
     seed_data['found_first']  = False
@@ -511,20 +515,28 @@ def processImages_HoughCircles(eng, delay_s, do_plot, verbose):
         chan_means = calcChanMeans(fg_img_converted_roi)
         stats['chan_means'].append( (chan_means[0], chan_means[1], chan_means[2]) )
 
-        img_full = deltaImage(bg_img, fg_img, thresh_val)
+        if True:
+            delta_img_blurred = deltaImage(bg_img, fg_img, thresh_val)
+            process_img = delta_img_blurred
+        else:
+            delta_image = cv2.absdiff(bg_img, fg_img)
+            delta_image_gray = cv2.cvtColor(delta_image, cv2.COLOR_BGR2GRAY)
+            ret,delta_image_thresh = cv2.threshold(delta_image_gray, thresh_val, 255, cv2.THRESH_BINARY)
+            delta_img_blurred = cv2.GaussianBlur(delta_image_thresh, (kernel_size, kernel_size), 0)
+            cum_img_bool = np.logical_or(cum_img_bool, delta_img_blurred)
+            process_img = np.uint8(cum_img_bool) * 255
 
         print("%sImage index: [%d]%s" % (util.BLUE, img_idx, util.RESET))
         print("ROI center: (%d, %d), width: %d, height: %d" % (centerYX[0], centerYX[1], width, height))
-        #img = extractROI(img_full, (int(centerYX[0]), int(centerYX[1])), int(width), int(height))
-        img = img_full
-        #print "  >> extracted img size: ", img.shape[:2]
+        #process_img_roi = extractROI(process_img, (int(centerYX[0]), int(centerYX[1])), int(width), int(height))
+        #print "  >> extracted img size: ", process_img_roi.shape[:2]
 
         seed_data['img_dims'] = (rows, cols, 3)
         seed_data['approx_center_yx'] = centerYX
         seed_data['approx_diameter']  = diag_len
         seed_data['diameter_tolerance']  = 0.20
          
-        ellipse, debug = findEllipse(img, seed_data, verbose, False)
+        ellipse, debug = findEllipse(process_img, seed_data, verbose, False)
         
         if ellipse[0][0] == -99:
             print("%s Unable to find contact area, Image index: (%d)%s" % (util.RED, img_idx, util.RESET))
@@ -579,13 +591,14 @@ def processImages_HoughCircles(eng, delay_s, do_plot, verbose):
             ret, fg_img = eng.next()
             
         if do_plot: 
+            output = cv2.resize(output, (0,0), fx=0.4, fy=0.4) 
             cv2.imshow('Images', output)
             if cv2.waitKey(int(delay_s*1000)) & 0xFF == ord('q'):
                 break
 
     return True, stats
 
-def processImages_CumSumDiff(eng, delay_s, do_plot, verbose):
+def processImages_CumSumDiff(eng, delay_s, do_plot, verbose, capture_video_filename):
     stats = {}
     stats['areas'] = []
     stats['deltas'] = []
@@ -593,21 +606,53 @@ def processImages_CumSumDiff(eng, delay_s, do_plot, verbose):
     ret, bg_img = eng.next()
     if not ret:
         return ret, stats
+    (rows, cols) = bg_img.shape[:2]
 
     if do_plot: 
         print "Plotting is on!!"
-        cv2.namedWindow('Images', cv2.WINDOW_NORMAL)
+        cv2.namedWindow('Images', cv2.WINDOW_AUTOSIZE)
+    
+    if len(capture_video_filename) > 0:
+        #~ print "Creating output video: ", capture_video_filename
+        #~ (width,height) = ( ((cols/2)*3), (rows/2) )
+        #~ fourcc = cv2.VideoWriter_fourcc('p','i','m','1')
+        #~ #fourcc = cv2.VideoWriter_fourcc('M','4','S','2')
+        #~ #fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v') 
+        #~ cap_video = cv2.VideoWriter(capture_video_filename, -1, 30, (width,height), True)
+        debug_img = np.zeros((rows, cols*2, 3), np.uint8)
+        cv2.putText(debug_img, ("Start capture, press 's' when ready..."), (100, 200), cv2.FONT_HERSHEY_DUPLEX, 2, util.magenta, 2)
+        output = np.concatenate((bg_img, debug_img), axis=1)
+        cv2.imshow('Images', output)
+        print "\n\nStart capture, press 's' when ready..."
+        while not cv2.waitKey(1000) & 0xFF == ord('s'): pass
 
     cum_img_bool = np.zeros(bg_img.shape[:2], np.bool)
     total_size = cum_img_bool.size
     print("[%d] Background Area: %d" % (eng.idx(), total_size))
 
-    thresh_val = 6
-    kernel_size = 15
+    thresh_val = 8
+    kernel_size = 55
     ret, fg_img = eng.next()
     while ret:
-        delta_img = deltaImage(bg_img, fg_img, thresh_val)
-        delta_img_blurred = cv2.GaussianBlur(delta_img, (kernel_size, kernel_size), 0)
+        if False:
+            delta_img = deltaImage(bg_img, fg_img, thresh_val)
+            delta_img_blurred = cv2.GaussianBlur(delta_img, (kernel_size, kernel_size), 0)
+        else:
+            #bg_img = cv2.GaussianBlur(bg_img, (5, 5), 0)
+            #bg_img_gray = cv2.cvtColor(bg_img, cv2.COLOR_BGR2GRAY)
+            
+            #img = cv2.cvtColor(fg_img, cv2.COLOR_BGR2HSV)
+            #chan = cv2.split(img)[0]
+            #chan_blurred = cv2.medianBlur(chan, 5)
+
+            #delta_image = cv2.absdiff(bg_img_gray, chan_blurred)
+            
+            delta_image = cv2.absdiff(bg_img, fg_img)
+            
+            delta_image_gray = cv2.cvtColor(delta_image, cv2.COLOR_BGR2GRAY)
+            ret,delta_image_thresh = cv2.threshold(delta_image_gray, thresh_val, 255, cv2.THRESH_BINARY)
+            delta_img_blurred = cv2.GaussianBlur(delta_image_thresh, (kernel_size, kernel_size), 0)
+
 
         before_cnt = np.count_nonzero(cum_img_bool)
         cum_img_bool = np.logical_or(cum_img_bool, delta_img_blurred)
@@ -621,12 +666,14 @@ def processImages_CumSumDiff(eng, delay_s, do_plot, verbose):
 
         if do_plot: 
             overlay = fg_img.copy()
-            (rows, cols) = overlay.shape[:2]
-            cum_img = np.uint(cum_img_bool) * 255
+            cum_img = np.uint8(cum_img_bool) * 255
             debug_img = np.zeros((rows, cols*2, 3), np.uint8)
             debug_img[:,0:cols,0] = delta_img_blurred[:,:]
             debug_img[:,0:cols,1] = delta_img_blurred[:,:]
             debug_img[:,0:cols,2] = delta_img_blurred[:,:]
+            #~ debug_img[:,0:cols,0] = delta_image[:,:,0]
+            #~ debug_img[:,0:cols,1] = delta_image[:,:,1]
+            #~ debug_img[:,0:cols,2] = delta_image[:,:,2]
             debug_img[:,cols:,0] = cum_img[:,:]
             debug_img[:,cols:,1] = cum_img[:,:]
             debug_img[:,cols:,2] = cum_img[:,:]
@@ -634,11 +681,18 @@ def processImages_CumSumDiff(eng, delay_s, do_plot, verbose):
             radius = int(np.sqrt(area/np.pi))
             cv2.circle(overlay, centerXY, radius, (255,0,0), 4) #cv2.circle(img, centerXY, radius, color[, thickness[, lineType[, shift]]])
             cv2.putText(overlay, ("%d (%d)"%(area, delta)), (int(centerXY[0])-200, int(centerXY[1])), cv2.FONT_HERSHEY_DUPLEX, 2, util.green, 3)
+            cv2.putText(debug_img, ("Thresh: %d, kernel: %d" % (thresh_val, kernel_size)), (50, 60), cv2.FONT_HERSHEY_DUPLEX, 2, util.blue, 2)
+            cv2.putText(debug_img, ("Cumulative %%: %.3f" % (float(after_cnt)/float(total_size))), (cols+50, 60), cv2.FONT_HERSHEY_DUPLEX, 2, util.magenta, 2)
             output = np.concatenate((overlay, debug_img), axis=1)
+            output = cv2.resize(output, (0,0), fx=0.4, fy=0.4) 
             cv2.imshow('Images', output)
+            #cap_video.write(output)
             if cv2.waitKey(int(delay_s*1000)) & 0xFF == ord('q'):
                 break
 
         bg_img = fg_img
         ret, fg_img = eng.next()
+        
+    #~ if len(capture_video_filename) > 0:
+        #~ cap_video.release()
     return True, stats

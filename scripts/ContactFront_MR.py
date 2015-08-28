@@ -20,13 +20,16 @@ def main():
     parser.add_argument('-f', dest='video_file', type=str, help='Input file path (MP4, AVI, etc)')
     parser.add_argument('-g', dest='glob_spec',  type=str, help='Glob spec of image files to process (/path/to/folder/2015-08-04_DFI28-*.png)')
     parser.add_argument('-s', dest='strategy',  type=str, help='Strategy to use (supported: HoughCircle | CumSumDiff)')
+    parser.add_argument('-o', dest='video_out_file',  type=str, help='Video output file')
     parser.add_argument('-d', dest='delay_s', type=float, default=0.020, help='Delay between frames in seconds (default: 0.02)')
     parser.add_argument('-v', dest='verbose', action='store_true', help='Run in verbose mode (default: True)')
+    parser.add_argument('--capture_video', dest='do_capture_video', action='store_true', help='Capture video of processing output (default: False)')
     parser.add_argument('--plot', dest='do_plot', action='store_true', help='Do plot data (default: True)')
     parser.add_argument('--no-plot', dest='do_plot', action='store_false', help='Do NOT plot data')
     parser.set_defaults(video_file='')
     parser.set_defaults(strategy='HoughCircle')
     parser.set_defaults(glob_spec='')
+    parser.set_defaults(do_capture_video=False)
     parser.set_defaults(do_plot=True)
     parser.set_defaults(verbose=True)
     args = parser.parse_args()
@@ -44,10 +47,19 @@ def main():
         parser.print_help()
         sys.exit(1)
 
+    if args.do_capture_video:
+        capture_video_filename = '../results/%s_Capture.mp4' % (result_name)
+    else:
+        capture_video_filename = ''
+
     if args.strategy == 'HoughCircle':
-        ret, stats = ip.processImages_HoughCircles(eng=eng, delay_s=args.delay_s, do_plot=args.do_plot, verbose=args.verbose)
+        ret, stats = ip.processImages_HoughCircles(eng=eng, delay_s=args.delay_s, 
+                                                   do_plot=args.do_plot, verbose=args.verbose,
+                                                   capture_video_filename=capture_video_filename)
     elif args.strategy == 'CumSumDiff':
-        ret, stats = ip.processImages_CumSumDiff(eng=eng, delay_s=args.delay_s, do_plot=args.do_plot, verbose=args.verbose)
+        ret, stats = ip.processImages_CumSumDiff(eng=eng, delay_s=args.delay_s, 
+                                                 do_plot=args.do_plot, verbose=args.verbose,
+                                                 capture_video_filename=capture_video_filename)
     else:
         print("\n\tError: Unsupported strategy: %s\n\n" % (args.strategy))
         parser.print_help()
@@ -56,11 +68,17 @@ def main():
     if not ret:
         print "!! Error processing images! ", result_name
 
-    if 'area' in stats and len(stats['areas']) > 0:
+    if 'areas' in stats and len(stats['areas']) > 0:
         plt.figure(figsize=(10*2,5))
         plt.plot(stats['areas'])
         plt.title('Contact Areas')
         plt.savefig('../results/%s_ContactAreas.png' % (result_name))
+
+    if 'deltas' in stats and len(stats['deltas']) > 0:
+        plt.figure(figsize=(10*2,5))
+        plt.plot(stats['deltas'])
+        plt.title('Area Deltas')
+        plt.savefig('../results/%s_AreaDeltas.png' % (result_name))
 
     if 'center_pts' in stats and len(stats['center_pts']) > 0:
         plt.figure(figsize=(10*2,5))
