@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 import math
+import Queue # for CumSumDiff
 
 import util
 
@@ -225,9 +226,9 @@ def estimateCircleDiameter(img):
     else:
         return (dia_np.mean())
 
-def estimateCircleDiameter2(img, center, diag_len, verbose, show_plots=False):
+def estimateCircleDiameter2(img, centerYX, diag_len, verbose, show_plots=False):
     #(rows, cols) = img.shape[:2]
-    center_pt = (center[1], center[0])
+    centerXY = (centerYX[1], centerYX[0])
     # pt = (center[1]+(376/2), center[0]-(488/2))
 #     end_pt=(cols-1, 1)
 #     offset=(0, 0)
@@ -243,33 +244,22 @@ def estimateCircleDiameter2(img, center, diag_len, verbose, show_plots=False):
 #     x,y = abs(x+offset[0]), abs(y+offset[1])
 #     print "rot pt (center) after offset: ", (x,y)
 
-    patch1 = subimage2(img, center_pt, (np.pi/4), 60, diag_len + 150)
-    patch2 = subimage2(img, center_pt, (3*np.pi/4), 60, diag_len + 150)
-    #patch3 = subimage2(img, center_pt, (np.pi/2), 60, cols)
-
-    patch1_blur = cv2.GaussianBlur(patch1, (15, 15), 0)
-    patch2_blur = cv2.GaussianBlur(patch2, (15, 15), 0)
-    #patch3_blur = cv2.GaussianBlur(patch3, (15, 15), 0)
-
-    patch1_mean = np.abs(np.mean(patch1_blur, axis=1))
-    patch1_diff = np.abs(np.diff(patch1_mean))
-    patch2_mean = np.abs(np.mean(patch2_blur, axis=1))
-    patch2_diff = np.abs(np.diff(patch2_mean))
-    #patch3_mean = np.abs(np.mean(patch3_blur, axis=1))
-    #patch3_diff = np.abs(np.diff(patch3_mean))
-
-
-    patches = []
-    patches.append(patch1_diff)
-    patches.append(patch2_diff)
-    #patches.append(patch3_diff)
-    
     if show_plots:
-        util.plot_imgs([(img, 'img'), (patch1_blur, 'patch1'), (patch2_blur, 'patch2')], color=False)
+        plot_lst = []
+        plot_lst.append( (img, 'img') )
 
-    dia=[]
-    for patch_diff in patches:
-        # split into two ranges: middle->left, middle->right
+    patch_angles=[ (np.pi/4), (3*np.pi/4) ]
+    dia = []
+    pt_sets = []
+    for idx, patch_angle in enumerate(patch_angles):
+        patch = subimage2(img, centerXY, patch_angle, 60, diag_len + 150)
+        patch_blur = cv2.GaussianBlur(patch, (15, 15), 0)
+        patch_mean = np.abs(np.mean(patch_blur, axis=1))
+        patch_diff = np.abs(np.diff(patch_mean))
+
+        if show_plots:
+            plot_lst.append( (patch_blur, ('patch %d' % (idx))) )
+
         n = patch_diff.size
         ranges = []
         lt_range = patch_diff[n/2::-1]
@@ -304,9 +294,92 @@ def estimateCircleDiameter2(img, center, diag_len, verbose, show_plots=False):
 
         lt_peakIdx = n/2 - peak_sets[0][0]
         rt_peakIdx = n/2 + peak_sets[1][0]
+        
+        print "  >>>>> rt_peakIdx, lt_peakIdx: ", peak_sets[1][0], peak_sets[0][0]
+        print "  >>>>> patch_angle, patch_angle2: ", patch_angle, patch_angle + (4*np.pi/4)
+        pt1 = util.polar2cart(peak_sets[1][0], patch_angle, centerXY)
+        pt1 = ( int(pt1[0]), int(pt1[1]) )
+        pt2 = util.polar2cart(peak_sets[0][0], patch_angle + (4*np.pi/4), centerXY)
+        pt2 = ( int(pt2[0]), int(pt2[1]) )
+        pt_sets.append( (pt1, pt2) )
+                
         #print(">>> lt_peakIdx: %d, rt_peakIdx: %d" % (lt_peakIdx,rt_peakIdx))
         if verbose: print("  (estimateCircleDiameter) nominal dia: %d" % (rt_peakIdx-lt_peakIdx))
         dia.append(rt_peakIdx-lt_peakIdx)
+
+        if show_plots:
+            util.plot_imgs(plot_lst)
+
+#----- old:
+
+    #~ patch1 = subimage2(img, centerXY, (np.pi/4), 60, diag_len + 150)
+    #~ patch2 = subimage2(img, centerXY, (3*np.pi/4), 60, diag_len + 150)
+    #~ #patch3 = subimage2(img, centerXY, (np.pi/2), 60, cols)
+#~ 
+    #~ patch1_blur = cv2.GaussianBlur(patch1, (15, 15), 0)
+    #~ patch2_blur = cv2.GaussianBlur(patch2, (15, 15), 0)
+    #~ #patch3_blur = cv2.GaussianBlur(patch3, (15, 15), 0)
+#~ 
+    #~ patch1_mean = np.abs(np.mean(patch1_blur, axis=1))
+    #~ patch1_diff = np.abs(np.diff(patch1_mean))
+    #~ patch2_mean = np.abs(np.mean(patch2_blur, axis=1))
+    #~ patch2_diff = np.abs(np.diff(patch2_mean))
+    #~ #patch3_mean = np.abs(np.mean(patch3_blur, axis=1))
+    #~ #patch3_diff = np.abs(np.diff(patch3_mean))
+#~ 
+#~ 
+    #~ patches = []
+    #~ patches.append(patch1_diff)
+    #~ patches.append(patch2_diff)
+    #~ #patches.append(patch3_diff)
+    #~ 
+    #~ if show_plots:
+        #~ util.plot_imgs([(img, 'img'), (patch1_blur, 'patch1'), (patch2_blur, 'patch2')], color=False)
+#~ 
+    #~ vector_sets=[  ]
+    #~ dia=[]
+    #~ for patch_diff in patches:
+        #~ # split into two ranges: middle->left, middle->right
+        #~ n = patch_diff.size
+        #~ ranges = []
+        #~ lt_range = patch_diff[n/2::-1]
+        #~ rt_range = patch_diff[n/2:]
+        #~ ranges.append(lt_range)
+        #~ ranges.append(rt_range)
+        #~ 
+        #~ if show_plots:
+            #~ plt.figure(figsize=(10*2,10*2))
+            #~ plt.subplot(221)
+            #~ plt.plot(lt_range)
+            #~ plt.subplot(222)
+            #~ plt.plot(rt_range)
+#~ 
+        #~ # iter through each range, find the first peak past threshold
+        #~ peak_sets = []
+        #~ for r in ranges:
+            #~ delta_threshold = np.max(r) * 0.25
+            #~ #if verbose: print "  (estimateCircleDiameter) threshold: ", delta_threshold
+            #~ idx_jumps = []
+            #~ for idx, delta in enumerate(r):
+                #~ if delta > delta_threshold:
+                    #~ idx_jumps.append( (idx, delta) )
+                    #~ #print("  idx_jump found: idx=%d, delta=%d" % (idx, delta))
+            #~ if len(idx_jumps) > 0:
+                #~ peak_set = idx_jumps[0]
+                #~ #print "  peakIdx, delta:", peak_set[0], peak_set[1]
+            #~ else:
+                #~ peak_set = (-99, 0)
+            #~ peak_sets.append(peak_set)
+        #~ #print "  peaks:", peak_sets
+#~ 
+        #~ lt_peakIdx = n/2 - peak_sets[0][0]
+        #~ rt_peakIdx = n/2 + peak_sets[1][0]
+        #~ 
+        #~ vector_sets.append( (rt_peakIdx, lt_peakIdx) )
+        #~ 
+        #~ #print(">>> lt_peakIdx: %d, rt_peakIdx: %d" % (lt_peakIdx,rt_peakIdx))
+        #~ if verbose: print("  (estimateCircleDiameter) nominal dia: %d" % (rt_peakIdx-lt_peakIdx))
+        #~ dia.append(rt_peakIdx-lt_peakIdx)
     
     dia_np=np.array(dia)
     delta = np.abs(dia_np.mean() - diag_len)
@@ -324,9 +397,9 @@ def estimateCircleDiameter2(img, center, diag_len, verbose, show_plots=False):
         found = True
         
     if not found:
-        return -99
+        return -99, pt_sets 
     else:
-        return (dia_np.mean())
+        return dia_np.mean(), pt_sets
     
 def extractROI(img, center_pt, width, height):
     (rows, cols) = img.shape[:2]
@@ -368,7 +441,7 @@ def findEllipse(img, seed_data, verbose=False, show_plots=False):
     centerYX  = seed_data['approx_center_yx']
     diag_len  = seed_data['approx_diameter'] 
 
-    dia = estimateCircleDiameter2(img, centerYX, diag_len, verbose, show_plots)
+    dia, pt_sets = estimateCircleDiameter2(img, centerYX, diag_len, verbose, show_plots)
     if dia == -99:
         print " !! estimated cirle diameters (height vs width) too large"
         ellipse = ((-99, -99), (0,0), 0)
@@ -377,103 +450,118 @@ def findEllipse(img, seed_data, verbose=False, show_plots=False):
     if verbose: print " estimated dia: ", dia
 #     width = findWidthOfCircle(img)
 #     print "width: ", width
+    circle_pts = []
+    for pt_set in pt_sets:
+        print "pt_set: ", pt_set
+        cv2.line(debug_img, pt_set[0], pt_set[1], (0, 255, 0), 3)
+        circle_pts.append(pt_set[0])
+        circle_pts.append(pt_set[1])
+    circle_fit_pts = np.array(circle_pts) 
+    center, radius = cv2.minEnclosingCircle(circle_fit_pts)
+    center = ( int(center[0]), int(center[1]) )
+    radius = int(radius)
+    cv2.circle(debug_img, center, radius, (0, 255, 255), 5)
     
-    method = cv2.HOUGH_GRADIENT
-    dp = 1           # inverse ratio of resolution
-    min_dist = 10    # minimum distance between detected centers
-    param1 = 60      # upper threshold for the internal Canny edge detector
-    param2 = 30      # threshold for center detection.
-    minRadius = int(dia/2)
-    maxRadius = int(dia/2)+100
-    #minRadius = int(dia/2) - int(int(dia/2) * 0.10)  
-    #maxRadius = int(dia/2) + int(int(dia/2) * 0.20)
+    if False:
+        method = cv2.HOUGH_GRADIENT
+        dp = 1           # inverse ratio of resolution
+        min_dist = 10    # minimum distance between detected centers
+        param1 = 60      # upper threshold for the internal Canny edge detector
+        param2 = 30      # threshold for center detection.
+        minRadius = int(dia/2)
+        maxRadius = int(dia/2)+100
+        #minRadius = int(dia/2) - int(int(dia/2) * 0.10)  
+        #maxRadius = int(dia/2) + int(int(dia/2) * 0.20)
 
-    circles = cv2.HoughCircles(img,cv2.HOUGH_GRADIENT, dp, min_dist,
-                               param1=param1, param2=param2, 
-                               minRadius=minRadius, maxRadius=maxRadius)
+        circles = cv2.HoughCircles(img,cv2.HOUGH_GRADIENT, dp, min_dist,
+                                   param1=param1, param2=param2, 
+                                   minRadius=minRadius, maxRadius=maxRadius)
 
-    # circles = cv2.HoughCircles(img,cv2.HOUGH_GRADIENT,1,20,param1=50,param2=30,minRadius=300,maxRadius=350)
+        # circles = cv2.HoughCircles(img,cv2.HOUGH_GRADIENT,1,20,param1=50,param2=30,minRadius=300,maxRadius=350)
 
-    if circles is not None:
-        numFound = len(circles[0,:])
-        if verbose: print " num circles found: ", numFound
+        if circles is not None:
+            numFound = len(circles[0,:])
+            if verbose: print " num circles found: ", numFound
 
 
-        # convert the (x, y) coordinates and radius of the circles to integers
-        #circles = np.uint16(np.around(circles, 0))
-        circles = np.round(circles[0, :]).astype("int")
+            # convert the (x, y) coordinates and radius of the circles to integers
+            #circles = np.uint16(np.around(circles, 0))
+            circles = np.round(circles[0, :]).astype("int")
 
-        def getKey(item):
-            return item[2]
-        circles = sorted(circles, key=getKey)  # sort circles based on radius (item[2])
+            def getKey(item):
+                return item[2]
+            circles = sorted(circles, key=getKey)  # sort circles based on radius (item[2])
 
-        pt_clusters=[ []  for x in xrange(7) ]
-        pt_averages=[ ]
+            pt_clusters=[ []  for x in xrange(7) ]
+            pt_averages=[ ]
 
-        if numFound <= 2:
-            numToUse = numFound
-        elif numFound > 2 and numFound <= 6:
-            numToUse = int(numFound*0.8)
-        elif numFound >= 15:
-            numToUse = 15
-        else:
-            numToUse = int(numFound*0.6)
-            
-        # loop over the (x, y) coordinates and radius of the circles
-        for (x, y, r) in circles[0:numToUse]:
-            #print "Center: ", (x,y), " Radius: ", r
-            pts = findPtsOnCircle((x, y), r)
-            pts = np.uint16(np.around(pts, 0))
-            #print pts
-            pt_clusters[0].append( (x,y) )
-            for idx, pt in enumerate(pts):
-                cv2.circle(debug_img, (pt[0],pt[1]), 5, (0,0,255),5)
-                pt_clusters[idx+1].append( (pt[0],pt[1]) )
-
-            # draw the outer circle
-            cv2.circle(debug_img, (x, y), r, (0, 255, 0), 2)
-            # draw the center of the circle
-            if numFound <= 10:
-                cv2.circle(debug_img,(x, y), 2, (0,0,255),3)
-        #print pt_clusters
-        #print "  >>> len(pt_clusters) = ", len(pt_clusters)
-        for pt_cluster in pt_clusters:
-            #print "    >>> len(pt_cluster) = ", len(pt_cluster)
-            pt_averages.append(findAvePt(pt_cluster))
-        #pt_averages = np.uint16(np.around(pt_averages, 0))
-        #print pt_averages
-        ellipse_fit_pts = np.array(pt_averages[1:])  
-        ellipse = cv2.fitEllipse(ellipse_fit_pts) 
-        #if verbose: print "Ellipse: ", ellipse
-        cv2.ellipse(debug_img,ellipse,(255,0,0),4)
-        
-        if seed_data['found_first']:
-            new_diag_len = int(np.hypot(ellipse[1][0], ellipse[1][1]))
-            if new_diag_len <= 0 or diag_len <= 0:
-                print " !! No more circles found..."
-                ellipse = ((-99, -99), (0,0), 0)
-                
-            percent_diff =  (diag_len - new_diag_len) / ((new_diag_len + diag_len)/2.0)
-            if percent_diff > 0.0:
-                print("%sEllipse diag percent_diff getting smaller: %.3f (prev=%.2f, new=%.2f)%s" % (util.BLUE, percent_diff, diag_len, new_diag_len, util.RESET))
-            elif percent_diff <= -0.1:
-                print("%sEllipse diag percent_diff getting bigger BY TOO MUCH : %.3f (prev=%.2f, new=%.2f)%s" % (util.RED, percent_diff, diag_len, new_diag_len, util.RESET))
-                ellipse = ((-99, -99), (0,0), 0)
+            if numFound <= 2:
+                numToUse = numFound
+            elif numFound > 2 and numFound <= 6:
+                numToUse = int(numFound*0.8)
+            elif numFound >= 15:
+                numToUse = 15
             else:
-                print("%sEllipse diag percent_diff getting bigger : %.3f (prev=%.2f, new=%.2f)%s" % (util.GREEN, percent_diff, diag_len, new_diag_len, util.RESET))
+                numToUse = int(numFound*0.6)
                 
+            # loop over the (x, y) coordinates and radius of the circles
+            for (x, y, r) in circles[0:numToUse]:
+                #print "Center: ", (x,y), " Radius: ", r
+                pts = findPtsOnCircle((x, y), r)
+                pts = np.uint16(np.around(pts, 0))
+                #print pts
+                pt_clusters[0].append( (x,y) )
+                for idx, pt in enumerate(pts):
+                    cv2.circle(debug_img, (pt[0],pt[1]), 5, (0,0,255),5)
+                    pt_clusters[idx+1].append( (pt[0],pt[1]) )
+
+                # draw the outer circle
+                cv2.circle(debug_img, (x, y), r, (0, 255, 0), 2)
+                # draw the center of the circle
+                if numFound <= 10:
+                    cv2.circle(debug_img,(x, y), 2, (0,0,255),3)
+            #print pt_clusters
+            #print "  >>> len(pt_clusters) = ", len(pt_clusters)
+            for pt_cluster in pt_clusters:
+                #print "    >>> len(pt_cluster) = ", len(pt_cluster)
+                pt_averages.append(findAvePt(pt_cluster))
+            #pt_averages = np.uint16(np.around(pt_averages, 0))
+            #print pt_averages
+            ellipse_fit_pts = np.array(pt_averages[1:])  
+            ellipse = cv2.fitEllipse(ellipse_fit_pts) 
+            #if verbose: print "Ellipse: ", ellipse
+            cv2.ellipse(debug_img,ellipse,(255,0,0),4)
+            
+            if seed_data['found_first']:
+                new_diag_len = int(np.hypot(ellipse[1][0], ellipse[1][1]))
+                if new_diag_len <= 0 or diag_len <= 0:
+                    print " !! No more circles found..."
+                    ellipse = ((-99, -99), (0,0), 0)
+                    
+                percent_diff =  (diag_len - new_diag_len) / ((new_diag_len + diag_len)/2.0)
+                if percent_diff > 0.0:
+                    print("%sEllipse diag percent_diff getting smaller: %.3f (prev=%.2f, new=%.2f)%s" % (util.BLUE, percent_diff, diag_len, new_diag_len, util.RESET))
+                elif percent_diff <= -0.1:
+                    print("%sEllipse diag percent_diff getting bigger BY TOO MUCH : %.3f (prev=%.2f, new=%.2f)%s" % (util.RED, percent_diff, diag_len, new_diag_len, util.RESET))
+                    ellipse = ((-99, -99), (0,0), 0)
+                else:
+                    print("%sEllipse diag percent_diff getting bigger : %.3f (prev=%.2f, new=%.2f)%s" % (util.GREEN, percent_diff, diag_len, new_diag_len, util.RESET))
+                
+        else:
+            print " !! No circles found..."
+            ellipse = ((-99, -99), (0,0), 0)
     else:
-        print " !! No circles found..."
         ellipse = ((-99, -99), (0,0), 0)
-        
-        
+
     return ellipse, debug_img
 
 def processImages_HoughCircles(eng, delay_s, do_plot, verbose, capture_video_filename):
     stats = {}
     stats['areas'] = []
+    stats['deltas'] = []
     stats['center_pts']=[]
     stats['chan_means'] = []
+    previous_area = -1
     
     thresh_val = 5
     kernel_size = 55
@@ -577,6 +665,8 @@ def processImages_HoughCircles(eng, delay_s, do_plot, verbose, capture_video_fil
 
             stats['areas'].append(approx_area)
             stats['center_pts'].append( (centerYX[1], centerYX[0]) ) # append tuple
+            if previous_area > 0: stats['deltas'].append(approx_area-previous_area)
+            previous_area = approx_area
 
             print("%s Success! Contact area: %d %s" % (util.GREEN, approx_area, util.RESET))
 
@@ -603,9 +693,18 @@ def processImages_CumSumDiff(eng, delay_s, do_plot, verbose, capture_video_filen
     stats['areas'] = []
     stats['deltas'] = []
     
-    ret, bg_img = eng.next()
-    if not ret:
-        return ret, stats
+    img_lag_cnt = 10 # must be > 0
+    img_queue = Queue.Queue(img_lag_cnt)
+    
+    while img_queue.qsize() < img_queue.maxsize:
+        ret, bg_img = eng.next()
+        if not ret:
+            print "Error: Not enough images to load queue"
+            return ret, stats
+        else:
+            print "Adding image to queue..."
+            img_queue.put(bg_img)
+
     (rows, cols) = bg_img.shape[:2]
 
     if do_plot: 
@@ -632,8 +731,10 @@ def processImages_CumSumDiff(eng, delay_s, do_plot, verbose, capture_video_filen
 
     thresh_val = 8
     kernel_size = 55
+    
+    bg_img = img_queue.get()
     ret, fg_img = eng.next()
-    while ret:
+    while ret:        
         if False:
             delta_img = deltaImage(bg_img, fg_img, thresh_val)
             delta_img_blurred = cv2.GaussianBlur(delta_img, (kernel_size, kernel_size), 0)
@@ -689,8 +790,10 @@ def processImages_CumSumDiff(eng, delay_s, do_plot, verbose, capture_video_filen
             #cap_video.write(output)
             if cv2.waitKey(int(delay_s*1000)) & 0xFF == ord('q'):
                 break
-
-        bg_img = fg_img
+        
+        img_queue.put(fg_img)
+        bg_img = img_queue.get()
+        #~ bg_img = fg_img
         ret, fg_img = eng.next()
         
     #~ if len(capture_video_filename) > 0:

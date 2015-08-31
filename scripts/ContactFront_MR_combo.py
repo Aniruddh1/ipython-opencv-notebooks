@@ -55,12 +55,14 @@ def main():
     ret, stats_HoughCircles = ip.processImages_HoughCircles(eng=eng, delay_s=args.delay_s, 
                                                do_plot=args.do_plot, verbose=args.verbose,
                                                capture_video_filename=capture_video_filename)
+    print "Completed HoughCircle. ret= ", ret
     ret, stats_CumSumDiff = ip.processImages_CumSumDiff(eng=eng, delay_s=args.delay_s, 
-                                             do_plot=args.do_plot, verbose=args.verbose,
+                                               do_plot=args.do_plot, verbose=args.verbose,
                                                capture_video_filename=capture_video_filename)
+    print "Completed CumSumDiff. ret= ", ret
 
-    if not ret:
-        print "!! Error processing images! ", result_name
+    #if not ret:
+    #    print "!! Error processing images! ", result_name
 
     if 'areas' in stats_HoughCircles and len(stats_HoughCircles['areas']) > 0:
         plt.figure(figsize=(10*2,5))
