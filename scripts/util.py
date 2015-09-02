@@ -32,9 +32,9 @@ BRIGHT_WHITE = '\033[37;1m'
 
 RESET = '\033[0m'
 
-def polar2cart(r, theta_rad, center):
-    x = r  * np.cos(theta_rad) + center[0]
-    y = r  * np.sin(theta_rad) + center[1]
+def polar2cart(r, theta_rad, centerXY):
+    x = r  * np.cos(theta_rad) + centerXY[0]
+    y = r  * np.sin(theta_rad) + centerXY[1]
     return x, y
 
 def plot_imgs(img_data_lst, color=False, interp='none', max_cols=3):

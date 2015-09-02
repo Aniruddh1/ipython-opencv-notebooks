@@ -19,7 +19,7 @@ def main():
     parser = argparse.ArgumentParser(description='Contact Front estimation from video file or glob spec of image files')
     parser.add_argument('-f', dest='video_file', type=str, help='Input file path (MP4, AVI, etc)')
     parser.add_argument('-g', dest='glob_spec',  type=str, help='Glob spec of image files to process (/path/to/folder/2015-08-04_DFI28-*.png)')
-    parser.add_argument('-s', dest='strategy',  type=str, help='Strategy to use (supported: HoughCircle | CumSumDiff)')
+    parser.add_argument('-s', dest='strategy',  type=str, help='Strategy to use (supported: HoughCircle, EdgeCircle, CumSumDiff)')
     parser.add_argument('-o', dest='video_out_file',  type=str, help='Video output file')
     parser.add_argument('-d', dest='delay_s', type=float, default=0.020, help='Delay between frames in seconds (default: 0.02)')
     parser.add_argument('-v', dest='verbose', action='store_true', help='Run in verbose mode (default: True)')
@@ -58,6 +58,10 @@ def main():
                                                    capture_video_filename=capture_video_filename)
     elif args.strategy == 'CumSumDiff':
         ret, stats = ip.processImages_CumSumDiff(eng=eng, delay_s=args.delay_s, 
+                                                 do_plot=args.do_plot, verbose=args.verbose,
+                                                 capture_video_filename=capture_video_filename)
+    elif args.strategy == 'EdgeCircle':
+        ret, stats = ip.processImages_EdgeCircles(eng=eng, delay_s=args.delay_s, 
                                                  do_plot=args.do_plot, verbose=args.verbose,
                                                  capture_video_filename=capture_video_filename)
     else:
