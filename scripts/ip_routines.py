@@ -122,6 +122,15 @@ def findAvePt(pts):
         y += pt[1]
     return ( (x/len(pts), y/len(pts))  )
 
+def findFirstPeakAboveThresh(vec, thresh):
+    first_peak_idx = -99
+    for idx, value in enumerate(vec):
+        if value > thresh:
+            first_peak_idx = idx
+            #print("  idx_jump found: idx=%d, value=%d" % (idx, value))
+            break
+    return first_peak_idx
+    
 def findWidthOfCircle(img):
     # extract patch along center-width
     (rows, cols) = img.shape[:2]
