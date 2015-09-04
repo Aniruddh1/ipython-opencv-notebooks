@@ -438,19 +438,21 @@ def estimateCircleDiameter3(img, centerXY, diag_len, verbose, debug_img, show_pl
     (rows, cols) = img.shape[:2]
 
     if False:
-        patch_angles=[ (np.pi/4), (3*np.pi/4) ]  # these only work if cols == rows
+        #patch_angles=[ (np.pi/4), (3*np.pi/4) ]  # these only work if cols == rows
+        patch_angles=[ (np.pi/4), -(np.pi/4) ]  # these only work if cols == rows
     else:
         theta_rad = math.atan2(rows, cols)
-        patch_angles=[ theta_rad, (np.pi-theta_rad) ]
+        #patch_angles=[ theta_rad, (np.pi-theta_rad) ]
+        patch_angles=[ np.pi/2-theta_rad, -(np.pi/2-theta_rad) ]
 
-    patch_width=200
+    patch_width=100
     dia = []
     pt_sets = []
     patch_rot_pt = (cols/2, rows/2)
     for idx, patch_angle in enumerate(patch_angles):
         print("------- Patch idx: %d, angle: %.2f ---------------------------" % (idx, np.rad2deg(patch_angle)))
 
-        patch = subimage2(img, patch_rot_pt, patch_angle, patch_width, diag_len + (1*150))
+        patch = subimage2(img, patch_rot_pt, patch_angle, patch_width, diag_len + (0*150))
         #patch_blur = cv2.GaussianBlur(patch, (15, 15), 0)
         patch_blur=patch
         patch_mean = np.abs(np.mean(patch_blur, axis=1))
