@@ -941,6 +941,13 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
                 circle_pts.append(pt_set[1])
             circle_fit_pts = np.array(circle_pts) 
             (x,y), r = cv2.minEnclosingCircle(circle_fit_pts)
+            
+            #~ pts = findPtsOnCircle((x, y), r)
+            #~ #pts = np.uint16(np.around(pts, 0))
+            #~ ellipse_fit_pts = np.array(pts) 
+            #~ ellipse = cv2.fitEllipse(ellipse_fit_pts) 
+            #~ cv2.ellipse(debug_img,ellipse,(255,0,0),4)
+            
             centerXY = ( int(x), int(y) )
             radius = int(r)
             cv2.circle(debug_img, centerXY, radius, (0, 255, 255), 5)
