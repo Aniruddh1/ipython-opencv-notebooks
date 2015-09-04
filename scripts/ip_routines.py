@@ -433,7 +433,140 @@ def estimateCircleDiameter2(img, centerXY, diag_len, verbose, debug_img, show_pl
         return -99, pt_sets 
     else:
         return dia_np.mean(), pt_sets
+
+def estimateCircleDiameter3(img, centerXY, diag_len, verbose, debug_img, show_plots=False):
+    (rows, cols) = img.shape[:2]
+
+    if False:
+        patch_angles=[ (np.pi/4), (3*np.pi/4) ]  # these only work if cols == rows
+    else:
+        theta_rad = math.atan2(rows, cols)
+        patch_angles=[ theta_rad, (np.pi-theta_rad) ]
+
+    patch_width=200
+    dia = []
+    pt_sets = []
+    patch_rot_pt = (cols/2, rows/2)
+    for idx, patch_angle in enumerate(patch_angles):
+        print("------- Patch idx: %d, angle: %.2f ---------------------------" % (idx, np.rad2deg(patch_angle)))
+
+        patch = subimage2(img, patch_rot_pt, patch_angle, patch_width, diag_len + (1*150))
+        #patch_blur = cv2.GaussianBlur(patch, (15, 15), 0)
+        patch_blur=patch
+        patch_mean = np.abs(np.mean(patch_blur, axis=1))
+        patch_diff = np.abs(np.diff(patch_mean))
+        patch_values = patch_mean
+
+        n = patch_values.size
+        print(" patch length = %d" % (n))
+        left_range  = patch_values[n/2::-1]
+        right_range = patch_values[n/2:]
+
+        left_peakIdx  = findFirstPeakAboveThresh(left_range,  (np.max(left_range) * 0.5) )
+        right_peakIdx = findFirstPeakAboveThresh(right_range, (np.max(right_range) * 0.5) )
+
+        left_edge  = n/2 - left_peakIdx
+        right_edge = n/2 + right_peakIdx
+
+        print(" left_peakIdx = %d,  left_edge = %d" % (left_peakIdx, left_edge))
+        print(" right_peakIdx = %d, right_edge = %d" % (right_peakIdx, right_edge))
+        #~ print "  >>>>> right_edge, left_edge: ", peak_sets[1][0], peak_sets[0][0]
+        #~ print "  >>>>> patch_angle, patch_angle2: ", patch_angle, patch_angle + np.pi
+
+        pt1 = util.polar2cart(left_peakIdx, patch_angle, (patch_rot_pt[0], patch_rot_pt[1]))
+        pt1 = ( int(pt1[0]), int(rows-pt1[1]) )
+        pt2 = util.polar2cart(right_peakIdx, patch_angle + np.pi, (patch_rot_pt[0], patch_rot_pt[1]))
+        pt2 = ( int(pt2[0]), int(rows-pt2[1]) )
+        pt_sets.append( (pt1, pt2) )
+
+        #print(">>> left_edge: %d, right_edge: %d" % (left_edge,right_edge))
+        if verbose: print(" nominal dia: %d" % (right_edge-left_edge))
+        dia.append(right_edge-left_edge)
+
+        if show_plots:
+            #
+            # Rotate patch 90, then plot
+            #
+            pt1 = util.polar2cart(centerXY[0], patch_angles[1], (0,0))
+            pt1 = ( int(pt1[0]), int(pt1[1]) )
+            patch_rot = np.rot90(patch_blur, k=1).copy()
+            cv2.line(patch_rot, (pt1[0], 0), (pt1[0], 70), 128, 3)
+            #cv2.line(patch_rot2, (800, 0), (800, 70), 128, 5)
+            plt.figure(figsize=(20,8))
+            plt.subplot(111)
+            plt.imshow(patch_rot, cmap='gray',vmin=0,vmax=255)
+            plt.title(('patch %d' % (idx)))
+            plt.xticks([t for t in range(50, patch_rot.shape[:2][1], 50)] )
+
+            #
+            # Calculate pts for patch width and add lines
+            #
+            pt1 = util.polar2cart(int(diag_len/2.0), patch_angle, centerXY)
+            pt1 = ( int(pt1[0]), int(pt1[1]) )
+            pt2 = util.polar2cart(int(diag_len/2.0), patch_angle + (4*np.pi/4), centerXY)
+            pt2 = ( int(pt2[0]), int(pt2[1]) )
+            #cv2.line(debug_img, pt1, pt2, (200, 255, 180), 2)
+            angle_offsets = [np.pi/2, 6*np.pi/4]
+            for angle_offset in angle_offsets:
+                pt1_1 = util.polar2cart(int(patch_width/2.0), patch_angle+angle_offset, pt1)
+                pt1_1 = ( int(pt1_1[0]), int(pt1_1[1]) )
+                pt2_1 = util.polar2cart(int(patch_width/2.0), patch_angle + (4*np.pi/4)-angle_offset, pt2)
+                pt2_1 = ( int(pt2_1[0]), int(pt2_1[1]) )
+                cv2.line(debug_img, pt1_1, pt2_1, (100, 155, 180), 2)
+
+            #
+            # plot the left and right patch mean values separately
+            #
+            if False:
+                plt.figure(figsize=(30,8))
+                plt.subplot(221)
+                plt.plot(left_range[::-1])
+                plt.xticks([t for t in range(0, left_range.size, 50)] )
+                plt.text(left_range.size-50, np.max(left_range)-50, ("%s" % (left_peakIdx)), fontsize=18)
+                plt.title("patch %d, left range (left half of patch_mean)" % (idx))
+                plt.subplot(222)
+                plt.plot(right_range)
+                plt.xticks([t for t in range(0, right_range.size, 50)] )
+                plt.text(20, np.max(right_range)-50, ("%s" % (right_peakIdx)), fontsize=18)
+                plt.title("patch %d, right range (right half of patch_mean)" % (idx))
+
+            #
+            # plot the patch_values
+            #
+            mid_pt = patch_values.size/2
+            max_pt = np.max(patch_values)/2
+            plt.figure(figsize=(50,6))
+            plt.subplot(220 + idx + 1)
+            plt.plot(patch_values)
+            plt.vlines(left_edge, 0, max_pt + 25, color='r', linewidth=4)
+            plt.text(left_edge-20, 20, ("%s" % left_edge), fontsize=12)
+            plt.vlines(right_edge, 0, max_pt + 25, color='r', linewidth=4)
+            plt.vlines(mid_pt, 0, max_pt, color='y', linewidth=2)
+            plt.text(right_edge-20, 20, ("%s" % right_edge), fontsize=12)
+            plt.text(left_edge+((right_edge-left_edge)/2), np.max(patch_values)-50, ("%s" % (right_edge-left_edge)), fontsize=18)
+            plt.text(left_edge+((mid_pt-left_edge)/2), max_pt-50, ("%s" % (left_peakIdx)), fontsize=18)
+            plt.text(mid_pt+((right_edge-mid_pt)/2), max_pt-50, ("%s" % (right_peakIdx)), fontsize=18)
+            plt.title("patch %d, mean" % (idx))
+            plt.xticks([t for t in range(50, patch_values.size, 50)] )
+        
+    dia_np=np.array(dia)
+    delta = np.abs(dia_np.mean() - diag_len)
+    #percent_diff =  np.abs(diag_len - dia_np.mean()) / ((dia_np.mean() + diag_len)/2.0)
     
+    if dia_np.std() > (dia_np.max() * 0.2):
+        found = False
+        print("  estimation failed : %.2f > %2f" % (dia_np.std(), (dia_np.max() * 0.2)))
+    else:
+        found = True
+        
+    if not found:
+        return -99, pt_sets 
+    else:
+        return dia_np.mean(), pt_sets
+    
+    
+    
+
 def extractROI(img, center_pt, width, height):
     (rows, cols) = img.shape[:2]
     # do some clamping based on image extents 
@@ -706,6 +839,7 @@ def processImages_HoughCircles(eng, delay_s, do_plot, verbose, capture_video_fil
             if do_plot: 
                 overlay = fg_img.copy()            
                 #cv2.ellipse(overlay,(center, ellipse[1], ellipse[2]),(255,0,0),4) #cv2.ellipse(img, (centerX,centerY), (width,height), 0, 0, 180, color, lt)
+                cv2.putText(overlay, ("%d"%(eng.idx())), (100, 100), cv2.FONT_HERSHEY_DUPLEX, 2, util.navy, 2)
                 cv2.ellipse(overlay,((centerYX[1], centerYX[0]), ellipse[1], ellipse[2]),(255,0,0),4) #cv2.ellipse(img, (centerX,centerY), (width,height), 0, 0, 180, color, lt)
                 cv2.putText(overlay, ("%d (%d)"%(approx_area, delta)), (int(centerYX[0])-200, int(centerYX[1])), cv2.FONT_HERSHEY_DUPLEX, 2, util.green, 3)
                 output = np.concatenate((overlay, debug_img), axis=1)
@@ -784,7 +918,7 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
         debug_img[:,:,1] = process_img[:,:]
         debug_img[:,:,2] = process_img[:,:]
         
-        dia, pt_sets = estimateCircleDiameter2(process_img, centerXY, diag_len, verbose, debug_img, False)
+        dia, pt_sets = estimateCircleDiameter3(process_img, centerXY, diag_len, verbose, debug_img, False)
         if verbose: print " estimated dia: ", dia
 
         if dia == -99:
@@ -793,14 +927,8 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
 
             print("%s[%d] Circle not found... %s" % (util.RED, eng.idx(), util.RESET))
 
-            if do_plot: 
-                overlay = fg_img.copy()            
-                cv2.putText(overlay, "n/a", centerXY, cv2.FONT_HERSHEY_DUPLEX, 2, util.green, 3)
-                output = np.concatenate((overlay, debug_img), axis=1)
-                output = cv2.resize(output, (0,0), fx=0.4, fy=0.4) 
-                cv2.imshow('Images', output)
-                if cv2.waitKey(int(delay_s*1000)) & 0xFF == ord('q'):
-                    break
+            radius = 0
+            area_text = "Area: n/a"
 
         else:
             circle_pts = []
@@ -825,19 +953,20 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
                 stats['deltas'].append(delta)
             previous_area = approx_area
 
+            area_text = ("Area: %d (%d)"%(approx_area, delta))
             print("%s[%d] Area: %d, Delta: %d %s" % (util.GREEN, eng.idx(), approx_area, delta, util.RESET))
 
-            if do_plot: 
-                overlay = fg_img.copy()            
-                #cv2.ellipse(overlay,(center, ellipse[1], ellipse[2]),(255,0,0),4) #cv2.ellipse(img, (centerX,centerY), (width,height), 0, 0, 180, color, lt)
-                cv2.circle(overlay, centerXY, radius, (255,0,0),4)
-                cv2.putText(overlay, ("%d"%(eng.idx())), (100, 25), cv2.FONT_HERSHEY_DUPLEX, 2, util.navy, 1)
-                cv2.putText(overlay, ("%d (%d)"%(approx_area, delta)), (int(centerXY[0])-200, int(centerXY[1])), cv2.FONT_HERSHEY_DUPLEX, 2, util.green, 3)
-                output = np.concatenate((overlay, debug_img), axis=1)
-                output = cv2.resize(output, (0,0), fx=0.4, fy=0.4) 
-                cv2.imshow('Images', output)
-                if cv2.waitKey(int(delay_s*1000)) & 0xFF == ord('q'):
-                    break
+        if do_plot: 
+            overlay = fg_img.copy()            
+            #cv2.ellipse(overlay,(center, ellipse[1], ellipse[2]),(255,0,0),4) #cv2.ellipse(img, (centerX,centerY), (width,height), 0, 0, 180, color, lt)
+            if radius > 0: cv2.circle(overlay, centerXY, radius, (255,0,0),4)
+            cv2.putText(overlay, ("%d"%(eng.idx())), (100, 100), cv2.FONT_HERSHEY_DUPLEX, 2, util.navy, 2)
+            cv2.putText(overlay, area_text, (int(centerXY[0])-200, int(centerXY[1])), cv2.FONT_HERSHEY_DUPLEX, 2, util.green, 3)
+            output = np.concatenate((overlay, debug_img), axis=1)
+            output = cv2.resize(output, (0,0), fx=0.4, fy=0.4) 
+            cv2.imshow('Images', output)
+            if cv2.waitKey(int(delay_s*1000)) & 0xFF == ord('q'):
+                break
        
         img_queue.put(fg_img)
         bg_img = img_queue.get()
@@ -941,6 +1070,7 @@ def processImages_CumSumDiff(eng, delay_s, do_plot, verbose, capture_video_filen
             centerXY = (cols/2, rows/2)
             radius = int(np.sqrt(area/np.pi))
             cv2.circle(overlay, centerXY, radius, (255,0,0), 4) #cv2.circle(img, centerXY, radius, color[, thickness[, lineType[, shift]]])
+            cv2.putText(overlay, ("%d"%(eng.idx())), (100, 100), cv2.FONT_HERSHEY_DUPLEX, 2, util.navy, 2)
             cv2.putText(overlay, ("%d (%d)"%(area, delta)), (int(centerXY[0])-200, int(centerXY[1])), cv2.FONT_HERSHEY_DUPLEX, 2, util.green, 3)
             cv2.putText(debug_img, ("Thresh: %d, kernel: %d" % (thresh_val, kernel_size)), (50, 60), cv2.FONT_HERSHEY_DUPLEX, 2, util.blue, 2)
             cv2.putText(debug_img, ("Cumulative %%: %.3f" % (float(after_cnt)/float(total_size))), (cols+50, 60), cv2.FONT_HERSHEY_DUPLEX, 2, util.magenta, 2)
