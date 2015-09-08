@@ -443,16 +443,17 @@ def estimateCircleDiameter3(img, centerXY, diag_len, verbose, debug_img, show_pl
     else:
         theta_rad = math.atan2(rows, cols)
         #patch_angles=[ theta_rad, (np.pi-theta_rad) ]
-        patch_angles=[ np.pi/2-theta_rad, -(np.pi/2-theta_rad) ]
+        #patch_angles=[ np.pi/2-theta_rad, -(np.pi/2-theta_rad) ]
+        patch_angles=[ theta_rad, -(theta_rad) ]
 
     patch_width=100
     dia = []
     pt_sets = []
     patch_rot_pt = (cols/2, rows/2)
     for idx, patch_angle in enumerate(patch_angles):
-        print("------- Patch idx: %d, angle: %.2f ---------------------------" % (idx, np.rad2deg(patch_angle)))
+        print(">>> Patch idx: %d, angle: %.2f" % (idx, np.rad2deg(patch_angle)))
 
-        patch = subimage2(img, patch_rot_pt, patch_angle, patch_width, diag_len + (0*150))
+        patch = subimage2(img, patch_rot_pt, (np.pi/2-patch_angle), patch_width, diag_len + (0*150))
         #patch_blur = cv2.GaussianBlur(patch, (15, 15), 0)
         patch_blur=patch
         patch_mean = np.abs(np.mean(patch_blur, axis=1))
@@ -493,7 +494,6 @@ def estimateCircleDiameter3(img, centerXY, diag_len, verbose, debug_img, show_pl
             pt1 = ( int(pt1[0]), int(pt1[1]) )
             patch_rot = np.rot90(patch_blur, k=1).copy()
             cv2.line(patch_rot, (pt1[0], 0), (pt1[0], 70), 128, 3)
-            #cv2.line(patch_rot2, (800, 0), (800, 70), 128, 5)
             plt.figure(figsize=(20,8))
             plt.subplot(111)
             plt.imshow(patch_rot, cmap='gray',vmin=0,vmax=255)
@@ -943,8 +943,8 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
             (x,y), r = cv2.minEnclosingCircle(circle_fit_pts)
             
             #~ pts = findPtsOnCircle((x, y), r)
-            #~ #pts = np.uint16(np.around(pts, 0))
-            #~ ellipse_fit_pts = np.array(pts) 
+            #~ pts = np.float32(np.around(pts, 0))
+            #~ ellipse_fit_pts = np.array(pts)
             #~ ellipse = cv2.fitEllipse(ellipse_fit_pts) 
             #~ cv2.ellipse(debug_img,ellipse,(255,0,0),4)
             
