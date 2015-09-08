@@ -449,7 +449,8 @@ def estimateCircleDiameter3(img, centerXY, diag_len, verbose, debug_img, show_pl
     patch_width=100
     dia = []
     pt_sets = []
-    patch_rot_pt = (cols/2, rows/2)
+    #patch_rot_pt = (cols/2, rows/2)
+    patch_rot_pt = centerXY
     for idx, patch_angle in enumerate(patch_angles):
         print(">>> Patch idx: %d, angle: %.2f" % (idx, np.rad2deg(patch_angle)))
 
@@ -476,9 +477,9 @@ def estimateCircleDiameter3(img, centerXY, diag_len, verbose, debug_img, show_pl
         #~ print "  >>>>> right_edge, left_edge: ", peak_sets[1][0], peak_sets[0][0]
         #~ print "  >>>>> patch_angle, patch_angle2: ", patch_angle, patch_angle + np.pi
 
-        pt1 = util.polar2cart(left_peakIdx, patch_angle, (patch_rot_pt[0], patch_rot_pt[1]))
+        pt1 = util.polar2cart(left_peakIdx, patch_angle, (patch_rot_pt[0], rows-patch_rot_pt[1]))
         pt1 = ( int(pt1[0]), int(rows-pt1[1]) )
-        pt2 = util.polar2cart(right_peakIdx, patch_angle + np.pi, (patch_rot_pt[0], patch_rot_pt[1]))
+        pt2 = util.polar2cart(right_peakIdx, patch_angle + np.pi, (patch_rot_pt[0], rows-patch_rot_pt[1]))
         pt2 = ( int(pt2[0]), int(rows-pt2[1]) )
         pt_sets.append( (pt1, pt2) )
 
@@ -941,6 +942,7 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
             for pt_set in pt_sets:
                 print "pt_set: ", pt_set
                 cv2.line(debug_img, pt_set[0], pt_set[1], (0, 255, 0), 3)
+                #cv2.line(debug_img, (pt_set[0][0], rows-pt_set[0][1]), (pt_set[1][0], rows-pt_set[1][1]), (0, 255, 0), 3)
                 circle_pts.append(pt_set[0])
                 circle_pts.append(pt_set[1])
             circle_fit_pts = np.array(circle_pts) 
@@ -955,6 +957,7 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
             centerXY = ( int(x), int(y) )
             radius = int(r)
             cv2.circle(debug_img, centerXY, radius, (0, 255, 255), 5)
+            print "Center pt: ", centerXY, " radius: ", radius
 
             #diag_len = 2 * radius
             approx_area = (np.pi * (radius**2))
