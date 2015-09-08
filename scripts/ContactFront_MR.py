@@ -91,9 +91,10 @@ def main():
         plt.title('Center XY')
         plt.savefig('../results/%s_CenterXY.png' % (result_name))
 
-    if 'center_pts' in stats and len(stats['center_pts']) > 0:
         plt.figure(figsize=(10*2,5))
         plt.plot([x for x,_ in stats['center_pts']], [y for _,y in stats['center_pts']])
+        plt.xticks([t for t in range(50, stats['image_dims'][1], 50)] )
+        plt.yticks([t for t in range(50, stats['image_dims'][0], 50)] )
         plt.title('Center Locs')
         plt.savefig('../results/%s_CenterLocs.png' % (result_name))
 

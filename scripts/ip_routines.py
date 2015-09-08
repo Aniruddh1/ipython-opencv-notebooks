@@ -739,6 +739,8 @@ def processImages_HoughCircles(eng, delay_s, do_plot, verbose, capture_video_fil
     bg_img_orig = bg_img.copy()
     bg_img = cv2.GaussianBlur(bg_img, (5, 5), 0)
     (rows, cols) = bg_img.shape[:2]
+    stats['image_dims'] = (rows, cols)
+
     centerYX = (rows/2, cols/2)
     width = cols
     height = rows
@@ -878,6 +880,8 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
             img_queue.put(bg_img)
 
     (rows, cols) = bg_img.shape[:2]
+    stats['image_dims'] = (rows, cols)
+
     centerXY = (cols/2, rows/2)
     diag_len = int(np.hypot(rows, cols))
 
@@ -953,7 +957,7 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
             cv2.circle(debug_img, centerXY, radius, (0, 255, 255), 5)
 
             #diag_len = 2 * radius
-            approx_area = (np.pi * 2 * radius)
+            approx_area = (np.pi * (radius**2))
 
             stats['areas'].append(approx_area)
             stats['center_pts'].append( (centerXY[0], centerXY[1]) ) # append tuple
@@ -1002,6 +1006,7 @@ def processImages_CumSumDiff(eng, delay_s, do_plot, verbose, capture_video_filen
             img_queue.put(bg_img)
 
     (rows, cols) = bg_img.shape[:2]
+    stats['image_dims'] = (rows, cols)
 
     if do_plot: 
         print "Plotting is on!!"
