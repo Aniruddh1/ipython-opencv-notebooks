@@ -5,9 +5,11 @@ import os.path
 import glob
 import time
 import argparse
+import datetime
 import cv2
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 
 # local imports
 import util
@@ -72,42 +74,65 @@ def main():
     if not ret:
         print "!! Error processing images! ", result_name
 
+    figs = []
     if 'areas' in stats and len(stats['areas']) > 0:
-        plt.figure(figsize=(10*2,5))
-        plt.plot(stats['areas'])
+        fig = plt.figure(figsize=(10*2,5))
+        plt.plot(stats['areas'], label='Approx Area (pels)')
         plt.title('Contact Areas')
-        plt.savefig('../results/%s_ContactAreas.png' % (result_name))
+        plt.legend()
+        #plt.savefig('../results/%s_ContactAreas.png' % (result_name))
+        figs.append(fig)
 
     if 'deltas' in stats and len(stats['deltas']) > 0:
-        plt.figure(figsize=(10*2,5))
-        plt.plot(stats['deltas'])
+        fig = plt.figure(figsize=(10*2,5))
+        plt.plot(stats['deltas'], label='Delta Area (pels)')
         plt.title('Area Deltas')
-        plt.savefig('../results/%s_AreaDeltas.png' % (result_name))
+        plt.legend()
+        #plt.savefig('../results/%s_AreaDeltas.png' % (result_name))
+        figs.append(fig)
 
     if 'center_pts' in stats and len(stats['center_pts']) > 0:
-        plt.figure(figsize=(10*2,5))
-        plt.plot([x for x,_ in stats['center_pts']])
-        plt.plot([y for _,y in stats['center_pts']])
+        fig = plt.figure(figsize=(10*2,5))
+        plt.plot([x for x,_ in stats['center_pts']], label='X')
+        plt.plot([y for _,y in stats['center_pts']], label='Y')
         plt.title('Center XY')
-        plt.savefig('../results/%s_CenterXY.png' % (result_name))
+        plt.legend()
+        #plt.savefig('../results/%s_CenterXY.png' % (result_name))
+        figs.append(fig)
 
-        plt.figure(figsize=(10*2,5))
-        plt.plot([x for x,_ in stats['center_pts']], [y for _,y in stats['center_pts']])
+        fig = plt.figure(figsize=(10*2,5))
+        plt.plot([x for x,_ in stats['center_pts']], [y for _,y in stats['center_pts']], label='Center Points')
         plt.xticks([t for t in range(50, stats['image_dims'][1], 50)] )
         plt.yticks([t for t in range(50, stats['image_dims'][0], 50)] )
         plt.title('Center Locs')
-        plt.savefig('../results/%s_CenterLocs.png' % (result_name))
+        plt.legend()
+        #plt.savefig('../results/%s_CenterLocs.png' % (result_name))
+        figs.append(fig)
 
     if 'chan_means' in stats and len(stats['chan_means']) > 0:
-        plt.figure(figsize=(10*2,5))
-        plt.plot([c for c,_,_ in stats['chan_means']], color='b')
-        plt.plot([c for _,c,_ in stats['chan_means']], color='g')
-        plt.plot([c for _,_,c in stats['chan_means']], color='r')
+        fig = plt.figure(figsize=(10*2,5))
+        plt.plot([c for c,_,_ in stats['chan_means']], color='b', label='Blue')
+        plt.plot([c for _,c,_ in stats['chan_means']], color='g', label='Green')
+        plt.plot([c for _,_,c in stats['chan_means']], color='r', label='Red')
         plt.title('HSV mean values from center ROI')
-        plt.savefig('../results/%s_HSV-Means.png' % (result_name))
+        plt.legend()
+        #plt.savefig('../results/%s_HSV-Means.png' % (result_name))
+        figs.append(fig)
+
     if args.do_plot: 
         plt.show()
 
+    timestamp = "{:%y%m%d-%H%M%S}".format(datetime.datetime.now())
+    with PdfPages('../results/%s_%s_Report.pdf' % (timestamp, result_name)) as pdf:
+        for fig in figs:
+            pdf.savefig(fig) 
+        d = pdf.infodict()
+        d['Title'] = u'Report for %s' % (result_name)
+        d['Author'] = u'Tom H. Rafferty / CNT'
+        d['Subject'] = u'Various plots created using %s strategy' % (args.strategy)
+        d['CreationDate'] = datetime.datetime.today()
+        d['ModDate'] = datetime.datetime.today()
+        
     eng.cleanup()
     if args.do_plot: 
         while cv2.waitKey(1) & 0xFF != ord('q'):
