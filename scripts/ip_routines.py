@@ -449,12 +449,11 @@ def estimateCircleDiameter3(img, centerXY, diag_len, verbose, debug_img, show_pl
     patch_width=100
     dia = []
     pt_sets = []
-    #patch_rot_pt = (cols/2, rows/2)
-    patch_rot_pt = centerXY
+
     for idx, patch_angle in enumerate(patch_angles):
         print(">>> Patch idx: %d, angle: %.2f" % (idx, np.rad2deg(patch_angle)))
 
-        patch = subimage2(img, patch_rot_pt, (np.pi/2-patch_angle), patch_width, diag_len + (0*150))
+        patch = subimage2(img, centerXY, (np.pi/2-patch_angle), patch_width, diag_len + (0*150))
         #patch_blur = cv2.GaussianBlur(patch, (15, 15), 0)
         patch_blur=patch
         patch_mean = np.abs(np.mean(patch_blur, axis=1))
@@ -477,10 +476,18 @@ def estimateCircleDiameter3(img, centerXY, diag_len, verbose, debug_img, show_pl
         #~ print "  >>>>> right_edge, left_edge: ", peak_sets[1][0], peak_sets[0][0]
         #~ print "  >>>>> patch_angle, patch_angle2: ", patch_angle, patch_angle + np.pi
 
-        pt1 = util.polar2cart(left_peakIdx, patch_angle, (patch_rot_pt[0], rows-patch_rot_pt[1]))
-        pt1 = ( int(pt1[0]), int(rows-pt1[1]) )
-        pt2 = util.polar2cart(right_peakIdx, patch_angle + np.pi, (patch_rot_pt[0], rows-patch_rot_pt[1]))
-        pt2 = ( int(pt2[0]), int(rows-pt2[1]) )
+        if left_peakIdx == -99 or right_peakIdx == -99:
+            print " Could not find peak..."
+            return -99, pt_sets
+
+        if left_peakIdx == 0 or right_peakIdx == 0:
+            print " Could only find one peak..."
+            return -99, pt_sets
+
+        pt1 = util.polar2cart(left_peakIdx, patch_angle, (centerXY[0], rows-centerXY[1]))
+        pt1 = ( int(np.round(pt1[0])), int(rows-np.round(pt1[1])) )
+        pt2 = util.polar2cart(right_peakIdx, patch_angle + np.pi, (centerXY[0], rows-centerXY[1]))
+        pt2 = ( int(np.round(pt2[0])), int(rows-np.round(pt2[1])) )
         pt_sets.append( (pt1, pt2) )
 
         #print(">>> left_edge: %d, right_edge: %d" % (left_edge,right_edge))
@@ -610,7 +617,7 @@ def findEllipse(img, seed_data, verbose=False, show_plots=False):
     centerYX  = seed_data['approx_center_yx']
     diag_len  = seed_data['approx_diameter'] 
 
-    dia, pt_sets = estimateCircleDiameter2(img, (centerYX[1], centerYX[0]), diag_len, verbose, debug_img, show_plots)
+    dia, pt_sets = estimateCircleDiameter3(img, (centerYX[1], centerYX[0]), diag_len, verbose, debug_img, show_plots)
     if dia == -99:
         print " !! estimated cirle diameters (height vs width) too large"
         ellipse = ((-99, -99), (0,0), 0)
@@ -902,7 +909,11 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
     total_size = cum_img_bool.size
     print("[%d] Background Area: %d" % (eng.idx(), total_size))
 
+    mask_bool = np.empty(bg_img.shape[:2], np.uint8)
+    mask_bool.fill(255)
+
     thresh_val = 8
+    #thresh_val = 30
     kernel_size = 55
     
     bg_img = img_queue.get()
@@ -915,11 +926,18 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
         delta_image_gray = cv2.cvtColor(delta_image, cv2.COLOR_BGR2GRAY)
         ret,delta_image_thresh = cv2.threshold(delta_image_gray, thresh_val, 255, cv2.THRESH_BINARY)
         delta_img_blurred = cv2.GaussianBlur(delta_image_thresh, (kernel_size, kernel_size), 0)
-        cum_img_bool = np.logical_or(cum_img_bool, delta_img_blurred)
-        process_img = np.uint8(cum_img_bool) * 255
+        if True:
+            cum_img_bool = np.logical_or(cum_img_bool, delta_img_blurred)
+            process_img = np.uint8(cum_img_bool) * 255
+        else:
+            # this doesn't work...
+            tmp_img = np.uint8(cum_img_bool) * 255
+            process_img = cv2.bitwise_or(tmp_img, delta_img_blurred) 
+            cum_img_bool = cv2.bitwise_and(process_img, mask_bool)
+            cum_img_bool = cum_img_bool / 255.0
         
         if False:
-            cv2.imwrite("../tmp/process_img_" + str(eng.idx()) + ".jpg", process_img)
+            cv2.imwrite("../tmp/process_img_2015-08-10_PL9_ZB09_" + str(eng.idx()) + ".jpg", process_img)
 
         debug_img[:,:,0] = process_img[:,:]
         debug_img[:,:,1] = process_img[:,:]
@@ -942,7 +960,6 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
             for pt_set in pt_sets:
                 print "pt_set: ", pt_set
                 cv2.line(debug_img, pt_set[0], pt_set[1], (0, 255, 0), 3)
-                #cv2.line(debug_img, (pt_set[0][0], rows-pt_set[0][1]), (pt_set[1][0], rows-pt_set[1][1]), (0, 255, 0), 3)
                 circle_pts.append(pt_set[0])
                 circle_pts.append(pt_set[1])
             circle_fit_pts = np.array(circle_pts) 
@@ -959,7 +976,7 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
             cv2.circle(debug_img, centerXY, radius, (0, 255, 255), 5)
             print "Center pt: ", centerXY, " radius: ", radius
 
-            #diag_len = 2 * radius
+            diag_len = (2 * radius) + 150
             approx_area = (np.pi * (radius**2))
 
             stats['areas'].append(approx_area)
@@ -981,8 +998,9 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
             output = np.concatenate((overlay, debug_img), axis=1)
             output = cv2.resize(output, (0,0), fx=0.4, fy=0.4) 
             cv2.imshow('Images', output)
-            if cv2.waitKey(int(delay_s*1000)) & 0xFF == ord('q'):
-                break
+            if delay_s > 0:
+                if cv2.waitKey(int(delay_s*1000)) & 0xFF == ord('q'):
+                    break
        
         img_queue.put(fg_img)
         bg_img = img_queue.get()
