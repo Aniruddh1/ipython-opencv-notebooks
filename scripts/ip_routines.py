@@ -913,7 +913,7 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
     mask_bool.fill(255)
 
     thresh_val = 8
-    #thresh_val = 30
+    thresh_val = 10
     kernel_size = 55
     
     bg_img = img_queue.get()
