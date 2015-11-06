@@ -446,14 +446,18 @@ def estimateCircleDiameter3(img, centerXY, diag_len, verbose, debug_img, show_pl
         #patch_angles=[ np.pi/2-theta_rad, -(np.pi/2-theta_rad) ]
         patch_angles=[ theta_rad, -(theta_rad) ]
 
-    patch_width=100
+    #patch_width=100
+    patch_width=int(diag_len * 0.10)
+    if patch_width > 100: patch_width = 100
+    if patch_width < 25:  patch_width = 25
+
     dia = []
     pt_sets = []
 
     for idx, patch_angle in enumerate(patch_angles):
-        print(">>> Patch idx: %d, angle: %.2f" % (idx, np.rad2deg(patch_angle)))
+        print(">>> Patch idx: %d, angle: %.2f, diag_len: %d, patch_width: %d" % (idx, np.rad2deg(patch_angle), diag_len, patch_width))
 
-        patch = subimage2(img, centerXY, (np.pi/2-patch_angle), patch_width, diag_len + (0*150))
+        patch = subimage2(img, centerXY, (np.pi/2-patch_angle), patch_width, diag_len + patch_width)
         #patch_blur = cv2.GaussianBlur(patch, (15, 15), 0)
         patch_blur=patch
         patch_mean = np.abs(np.mean(patch_blur, axis=1))
@@ -478,11 +482,11 @@ def estimateCircleDiameter3(img, centerXY, diag_len, verbose, debug_img, show_pl
 
         if left_peakIdx == -99 or right_peakIdx == -99:
             print " Could not find peak..."
-            return -99, pt_sets
+            #return -99, pt_sets
 
         if left_peakIdx == 0 or right_peakIdx == 0:
             print " Could only find one peak..."
-            return -99, pt_sets
+            #return -99, pt_sets
 
         pt1 = util.polar2cart(left_peakIdx, patch_angle, (centerXY[0], rows-centerXY[1]))
         pt1 = ( int(np.round(pt1[0])), int(rows-np.round(pt1[1])) )
@@ -1124,3 +1128,49 @@ def processImages_CumSumDiff(eng, delay_s, do_plot, verbose, capture_video_filen
     #~ if len(capture_video_filename) > 0:
         #~ cap_video.release()
     return True, stats
+
+def createProcessImages_EdgeCircles(eng, output_spec):
+    img_lag_cnt = 10 # must be > 0
+    img_queue = Queue.Queue(img_lag_cnt)
+
+    while img_queue.qsize() < img_queue.maxsize:
+        ret, bg_img = eng.next()
+        if not ret:
+            print "Error: Not enough images to load queue"
+            return ret, stats
+        else:
+            print "Adding image to queue..."
+            img_queue.put(bg_img)
+
+    cum_img_bool = np.zeros(bg_img.shape[:2], np.bool)
+    total_size = cum_img_bool.size
+    print("[%d] Background Area: %d" % (eng.idx(), total_size))
+
+    mask_bool = np.empty(bg_img.shape[:2], np.uint8)
+    mask_bool.fill(255)
+
+    thresh_val = 8
+    thresh_val = 6
+    kernel_size = 25
+    
+    bg_img = img_queue.get()
+    ret, fg_img = eng.next()
+    while ret:
+        outfile = output_spec.replace('*',  ('%04d' % eng.idx()))
+        print "Creating file: " + outfile       
+        delta_image = cv2.absdiff(bg_img, fg_img)
+        delta_image_gray = cv2.cvtColor(delta_image, cv2.COLOR_BGR2GRAY)
+        ret,delta_image_thresh = cv2.threshold(delta_image_gray, thresh_val, 255, cv2.THRESH_BINARY)
+        delta_img_blurred = cv2.GaussianBlur(delta_image_thresh, (kernel_size, kernel_size), 0)
+
+        cum_img_bool = np.logical_or(cum_img_bool, delta_img_blurred)
+        process_img = np.uint8(cum_img_bool) * 255
+
+        cv2.imwrite( outfile, process_img )
+
+        img_queue.put(fg_img)
+        bg_img = img_queue.get()
+        #~ bg_img = fg_img
+        ret, fg_img = eng.next()
+
+    return True
