@@ -3,11 +3,12 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
-blue = (255, 0, 0)
+white = (255, 255, 255)
+blue = (0, 0, 255)
 navy = (128, 0, 0)
 gray = (144, 128, 112)
 green = (0, 255, 0)
-red = (0, 0, 255)
+red = (255, 0, 0)
 yellow = (0, 255, 255)
 magenta = (238, 0, 238)
 orange = (0, 154, 238)
@@ -37,12 +38,12 @@ def polar2cart(r, theta_rad, centerXY):
     y = r  * np.sin(theta_rad) + centerXY[1]
     return x, y
 
-def plot_imgs(img_data_lst, color=False, interp='none', max_cols=3):
+def plot_imgs(img_data_lst, color=False, interp='none', max_cols=3, fig_size=10):
     cnt=len(img_data_lst)
     r,c,n = cnt,cnt,1
     for idx, img_data in enumerate(img_data_lst):
         if idx % max_cols == 0:
-            plt.figure(figsize=(10*r,10*c))
+            plt.figure(figsize=(fig_size*r,fig_size*c))
         plt.subplot(r,c,idx+1)
         if color:
             #plt.imshow(img_data[0], interpolation='none', vmax=abs(img_data[0]).max(), vmin=-abs(img_data[0]).max())
@@ -59,24 +60,24 @@ def fig2data( fig ):
     """
     # draw the renderer
     fig.canvas.draw ( )
- 
+
     # Get the RGBA buffer from the figure
     w,h = fig.canvas.get_width_height()
     buf = np.fromstring ( fig.canvas.tostring_rgb(), dtype=np.uint8 )
     buf.shape = ( w, h, 3 )
- 
+
     # canvas.tostring_rgb give pixmap in RGB mode. Roll the ALPHA channel to have it in RGBA mode
     #buf = np.roll ( buf, 3, axis = 2 )
-    
+
     #buf.shape = ( w, h,4 )
- 
+
     # canvas.tostring_argb give pixmap in ARGB mode. Roll the ALPHA channel to have it in RGBA mode
     #buf = np.roll ( buf, 3, axis = 2 )
     return buf
-        
+
 class Image_List:
     """ Image List
-        
+
         Parses a file spec, possibly sorts them, and reads them into an image list.
         user can then use next, prev methods to iterate through images.
     """
@@ -117,7 +118,7 @@ class Image_List:
         else:
             self.image_idx = len(self.images) - 1
             return None
-            
+
     def prev(self):
         self.image_idx -= 1
         if self.image_idx >= 0:
@@ -133,7 +134,7 @@ class Image_List:
             return None
 
     def images(self):
-        return self.images      
+        return self.images
 
 class Image_Engine:
     """ Image Engine
@@ -168,7 +169,7 @@ class Image_Engine:
             else:
                 ret, img = False, None
         return ret, img
-    
+
     def idx(self):
         return self.image_idx
 
