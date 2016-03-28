@@ -4,6 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 white = (255, 255, 255)
+black = (0, 0, 0)
 blue = (0, 0, 255)
 navy = (128, 0, 0)
 gray = (144, 128, 112)
@@ -145,11 +146,11 @@ class Image_Engine:
             self.file_spec = file_spec
             self.image_files = glob.glob(self.file_spec)
             self.image_files = sorted(self.image_files)
-            print "Image Engine initialized with ", file_spec
-            print " Total images: ", len(self.image_files)
+            print("Image Engine initialized with %s" % (file_spec))
+            print(" Total images: %d" % len(self.image_files))
         else:
             self.cap = cv2.VideoCapture(file_spec)
-            print "Image Engine initialized with ", file_spec
+            print("Image Engine initialized with " % (file_spec))
 
         self.image_idx = 0
 

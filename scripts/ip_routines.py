@@ -2,7 +2,8 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 import math
-import Queue # for CumSumDiff
+#import Queue # for CumSumDiff
+from multiprocessing import Queue
 
 import util
 
@@ -26,10 +27,10 @@ def findPeakIdx(img, pt1, pt2, verbose=False):
     x_len = abs(pt1[0]-pt2[0])
     y_len = abs(pt1[1]-pt2[1])
     num = int(np.hypot(x_len, y_len))
-    if verbose: print "  hypot: ", num
+    if verbose: print("  hypot: ", num)
     x, y = np.linspace(pt1[0], pt2[0], num), np.linspace(pt1[1], pt2[1], num)
-    if verbose: print "pt1[0], pt2[0], x[0], x[-2], x[-1]:", pt1[0], pt2[0], x[0], x[-2], x[-1]
-    if verbose: print "pt1[1], pt2[1], y[0], y[-2], y[-1]:", pt1[1], pt2[1], y[0], y[-2], y[-1]
+    if verbose: print("pt1[0], pt2[0], x[0], x[-2], x[-1]:", pt1[0], pt2[0], x[0], x[-2], x[-1])
+    if verbose: print("pt1[1], pt2[1], y[0], y[-2], y[-1]:", pt1[1], pt2[1], y[0], y[-2], y[-1])
 
     # Extract the values along the line, using cubic interpolation
     zi = scipy.ndimage.map_coordinates(img, np.vstack((y,x)))
@@ -55,7 +56,7 @@ def findPeakIdx(img, pt1, pt2, verbose=False):
     else:
         peakIdx = np.argmax(zi_diff)
     
-    if verbose: print "  peakIdx, zi_diff[peakIdx] :", peakIdx, zi_diff[peakIdx]
+    if verbose: print("  peakIdx, zi_diff[peakIdx] :", peakIdx, zi_diff[peakIdx])
     
     return peakIdx, zi_diff, zi_int
 
@@ -153,7 +154,7 @@ def findWidthOfCircle(img):
     peak_sets = []
     for r in ranges:
         delta_threshold = np.max(r) * 0.25
-        if verbose: print "  threshold: ", delta_threshold
+        if verbose: print("  threshold: ", delta_threshold)
         idx_jumps = []
         for idx, delta in enumerate(r):
             if delta > delta_threshold:
@@ -161,11 +162,11 @@ def findWidthOfCircle(img):
                 if verbose: print("  idx_jump found: idx=%d, delta=%d" % (idx, delta))
         if len(idx_jumps) > 0:
             peak_set = idx_jumps[0]
-            if verbose: print "  peakIdx, delta:", peak_set[0], peak_set[1]
+            if verbose: print("  peakIdx, delta:", peak_set[0], peak_set[1])
         else:
             peak_set = (-99, 0)
         peak_sets.append(peak_set)
-    if verbose: print "  peaks:", peak_sets
+    if verbose: print("  peaks:", peak_sets)
 
     lt_peakIdx = n/2 - peak_sets[0][0]
     rt_peakIdx = n/2 + peak_sets[1][0]
@@ -177,7 +178,7 @@ def estimateCircleDiameter(img):
     sample_halfWidth = 80
     # extract patch along center-width
     (rows, cols) = img.shape[:2]
-    if verbose: print "  (estimateCircleDiameter) rows, cols: ", (rows, cols)
+    if verbose: print("  (estimateCircleDiameter) rows, cols: ", (rows, cols))
     patch_w = img[rows/2-sample_halfWidth:rows/2+sample_halfWidth, 0:cols-1 ]  #np slice: [startY:endY, startX:endX]
     patch_w = cv2.GaussianBlur(patch_w, (15, 15), 0)
 
@@ -311,7 +312,7 @@ def estimateCircleDiameter2(img, centerXY, diag_len, verbose, debug_img, show_pl
         peak_sets = []
         for r in ranges:
             delta_threshold = np.max(r) * 0.55
-            if verbose: print "  (estimateCircleDiameter2) threshold: ", delta_threshold
+            if verbose: print("  (estimateCircleDiameter2) threshold: ", delta_threshold)
             idx_jumps = []
             for idx, delta in enumerate(r):
                 if delta > delta_threshold:
@@ -319,11 +320,11 @@ def estimateCircleDiameter2(img, centerXY, diag_len, verbose, debug_img, show_pl
                     #print("  idx_jump found: idx=%d, delta=%d" % (idx, delta))
             if len(idx_jumps) > 0:
                 peak_set = idx_jumps[0]
-                #print "  peakIdx, delta:", peak_set[0], peak_set[1]
+                #print("  peakIdx, delta:", peak_set[0], peak_set[1])
             else:
                 peak_set = (-99, 0)
             peak_sets.append(peak_set)
-        #print "  peaks:", peak_sets
+        #print("  peaks:", peak_sets)
 
         lt_peakIdx = n/2 - peak_sets[0][0]
         rt_peakIdx = n/2 + peak_sets[1][0]
@@ -481,11 +482,11 @@ def estimateCircleDiameter3(img, centerXY, diag_len, verbose, debug_img, show_pl
         #~ print "  >>>>> patch_angle, patch_angle2: ", patch_angle, patch_angle + np.pi
 
         if left_peakIdx == -99 or right_peakIdx == -99:
-            print " Could not find peak..."
+            print(" Could not find peak...")
             #return -99, pt_sets
 
         if left_peakIdx == 0 or right_peakIdx == 0:
-            print " Could only find one peak..."
+            print(" Could only find one peak...")
             #return -99, pt_sets
 
         pt1 = util.polar2cart(left_peakIdx, patch_angle, (centerXY[0], rows-centerXY[1]))
@@ -592,7 +593,7 @@ def extractROI(img, center_pt, width, height):
     startY = center_pt[0] - height/2
     endX = center_pt[1] + width/2
     endY = center_pt[0] + height/2
-    if verbose: print "  (extractROI) startX, startY, endX, endY: ", startX, startY, endX, endY
+    if verbose: print("  (extractROI) startX, startY, endX, endY: ", startX, startY, endX, endY)
     return img[ startY:endY, startX:endX ]  #np slice: [startY:endY, startX:endX]
 
 def calcChanMeans(img):
@@ -623,16 +624,16 @@ def findEllipse(img, seed_data, verbose=False, show_plots=False):
 
     dia, pt_sets = estimateCircleDiameter3(img, (centerYX[1], centerYX[0]), diag_len, verbose, debug_img, show_plots)
     if dia == -99:
-        print " !! estimated cirle diameters (height vs width) too large"
+        print(" !! estimated cirle diameters (height vs width) too large")
         ellipse = ((-99, -99), (0,0), 0)
         return ellipse, debug_img
     
-    if verbose: print " estimated dia: ", dia
+    if verbose: print(" estimated dia: ", dia)
 #     width = findWidthOfCircle(img)
-#     print "width: ", width
+#     print("width: ", width)
     circle_pts = []
     for pt_set in pt_sets:
-        print "pt_set: ", pt_set
+        print("pt_set: ", pt_set)
         cv2.line(debug_img, pt_set[0], pt_set[1], (0, 255, 0), 3)
         circle_pts.append(pt_set[0])
         circle_pts.append(pt_set[1])
@@ -660,7 +661,7 @@ def findEllipse(img, seed_data, verbose=False, show_plots=False):
 
     if circles is not None:
         numFound = len(circles[0,:])
-        if verbose: print " num circles found: ", numFound
+        if verbose: print(" num circles found: ", numFound)
 
 
         # convert the (x, y) coordinates and radius of the circles to integers
@@ -685,7 +686,7 @@ def findEllipse(img, seed_data, verbose=False, show_plots=False):
             
         # loop over the (x, y) coordinates and radius of the circles
         for (x, y, r) in circles[0:numToUse]:
-            #print "Center: ", (x,y), " Radius: ", r
+            #print("Center: ", (x,y), " Radius: ", r)
             pts = findPtsOnCircle((x, y), r)
             pts = np.uint16(np.around(pts, 0))
             #print pts
@@ -700,21 +701,21 @@ def findEllipse(img, seed_data, verbose=False, show_plots=False):
             if numFound <= 10:
                 cv2.circle(debug_img,(x, y), 2, (0,0,255),3)
         #print pt_clusters
-        #print "  >>> len(pt_clusters) = ", len(pt_clusters)
+        #print("  >>> len(pt_clusters) = ", len(pt_clusters))
         for pt_cluster in pt_clusters:
-            #print "    >>> len(pt_cluster) = ", len(pt_cluster)
+            #print("    >>> len(pt_cluster) = ", len(pt_cluster))
             pt_averages.append(findAvePt(pt_cluster))
         #pt_averages = np.uint16(np.around(pt_averages, 0))
         #print pt_averages
         ellipse_fit_pts = np.array(pt_averages[1:])  
         ellipse = cv2.fitEllipse(ellipse_fit_pts) 
-        #if verbose: print "Ellipse: ", ellipse
+        #if verbose: print("Ellipse: ", ellipse)
         cv2.ellipse(debug_img,ellipse,(255,0,0),4)
         
         if seed_data['found_first']:
             new_diag_len = int(np.hypot(ellipse[1][0], ellipse[1][1]))
             if new_diag_len <= 0 or diag_len <= 0:
-                print " !! No more circles found..."
+                print(" !! No more circles found...")
                 ellipse = ((-99, -99), (0,0), 0)
                 
             percent_diff =  (diag_len - new_diag_len) / ((new_diag_len + diag_len)/2.0)
@@ -727,7 +728,7 @@ def findEllipse(img, seed_data, verbose=False, show_plots=False):
                 print("%sEllipse diag percent_diff getting bigger : %.3f (prev=%.2f, new=%.2f)%s" % (util.GREEN, percent_diff, diag_len, new_diag_len, util.RESET))
             
     else:
-        print " !! No circles found..."
+        print(" !! No circles found...")
         ellipse = ((-99, -99), (0,0), 0)
 
     return ellipse, debug_img
@@ -762,7 +763,7 @@ def processImages_HoughCircles(eng, delay_s, do_plot, verbose, capture_video_fil
     total_size = cum_img_bool.size
 
     if do_plot: 
-        print "Plotting is on!!"
+        print("Plotting is on!!")
         cv2.namedWindow('Images', cv2.WINDOW_AUTOSIZE)   #cv2.WINDOW_NORMAL
 
     seed_data = {}
@@ -772,8 +773,8 @@ def processImages_HoughCircles(eng, delay_s, do_plot, verbose, capture_video_fil
     while ret:
         img_idx = eng.idx()
 
-        print "---------------------------------------------------------------------"
-        print "FG img rows,cols:", fg_img.shape[:2]
+        print("---------------------------------------------------------------------")
+        print("FG img rows,cols:", fg_img.shape[:2])
 
         # let's first analyze a small ROI at the center point
         fg_img_converted = cv2.cvtColor(fg_img, cv2.COLOR_BGR2HSV)
@@ -797,7 +798,7 @@ def processImages_HoughCircles(eng, delay_s, do_plot, verbose, capture_video_fil
         print("%sImage index: [%d]%s" % (util.BLUE, img_idx, util.RESET))
         print("ROI center: (%d, %d), width: %d, height: %d" % (centerYX[0], centerYX[1], width, height))
         #process_img_roi = extractROI(process_img, (int(centerYX[0]), int(centerYX[1])), int(width), int(height))
-        #print "  >> extracted img size: ", process_img_roi.shape[:2]
+        #print("  >> extracted img size: ", process_img_roi.shape[:2])
 
         seed_data['img_dims'] = (rows, cols, 3)
         seed_data['approx_center_yx'] = centerYX
@@ -828,7 +829,7 @@ def processImages_HoughCircles(eng, delay_s, do_plot, verbose, capture_video_fil
         else:
             seed_data['found_first']  = True
 
-            print ellipse
+            print(ellipse)
             pad = 150
             #if ellipse[2] == 0:
             if True:
@@ -885,10 +886,10 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
     while img_queue.qsize() < img_queue.maxsize:
         ret, bg_img = eng.next()
         if not ret:
-            print "Error: Not enough images to load queue"
+            print("Error: Not enough images to load queue")
             return ret, stats
         else:
-            print "Adding image to queue..."
+            print("Adding image to queue...")
             img_queue.put(bg_img)
 
     (rows, cols) = bg_img.shape[:2]
@@ -898,7 +899,7 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
     diag_len = int(np.hypot(rows, cols))
 
     if do_plot: 
-        print "Plotting is on!!"
+        print("Plotting is on!!")
         cv2.namedWindow('Images', cv2.WINDOW_AUTOSIZE)   #cv2.WINDOW_NORMAL
 
     if len(capture_video_filename) > 0:
@@ -906,7 +907,7 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
         cv2.putText(debug_img, ("Start capture, press 's' when ready..."), (100, 200), cv2.FONT_HERSHEY_DUPLEX, 2, util.magenta, 2)
         output = np.concatenate((bg_img, debug_img), axis=1)
         cv2.imshow('Images', output)
-        print "\n\nStart capture, press 's' when ready..."
+        print("\n\nStart capture, press 's' when ready...")
         while not cv2.waitKey(1000) & 0xFF == ord('s'): pass
 
     cum_img_bool = np.zeros(bg_img.shape[:2], np.bool)
@@ -923,7 +924,7 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
     bg_img = img_queue.get()
     ret, fg_img = eng.next()
     while ret:
-        print "---------------------------------------------------------------------"
+        print("---------------------------------------------------------------------")
         debug_img = np.zeros((rows, cols, 3), np.uint8)
         
         delta_image = cv2.absdiff(bg_img, fg_img)
@@ -948,7 +949,7 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
         debug_img[:,:,2] = process_img[:,:]
         
         dia, pt_sets = estimateCircleDiameter3(process_img, centerXY, diag_len, verbose, debug_img, False)
-        if verbose: print " estimated dia: ", dia
+        if verbose: print(" estimated dia: ", dia)
 
         if dia == -99:
             centerXY = (cols/2, rows/2)
@@ -962,7 +963,7 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
         else:
             circle_pts = []
             for pt_set in pt_sets:
-                print "pt_set: ", pt_set
+                print("pt_set: ", pt_set)
                 cv2.line(debug_img, pt_set[0], pt_set[1], (0, 255, 0), 3)
                 circle_pts.append(pt_set[0])
                 circle_pts.append(pt_set[1])
@@ -978,7 +979,7 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
             centerXY = ( int(x), int(y) )
             radius = int(r)
             cv2.circle(debug_img, centerXY, radius, (0, 255, 255), 5)
-            print "Center pt: ", centerXY, " radius: ", radius
+            print("Center pt: ", centerXY, " radius: ", radius)
 
             diag_len = (2 * radius) + 150
             approx_area = (np.pi * (radius**2))
@@ -1024,17 +1025,17 @@ def processImages_CumSumDiff(eng, delay_s, do_plot, verbose, capture_video_filen
     while img_queue.qsize() < img_queue.maxsize:
         ret, bg_img = eng.next()
         if not ret:
-            print "Error: Not enough images to load queue"
+            print("Error: Not enough images to load queue")
             return ret, stats
         else:
-            print "Adding image to queue..."
+            print("Adding image to queue...")
             img_queue.put(bg_img)
 
     (rows, cols) = bg_img.shape[:2]
     stats['image_dims'] = (rows, cols)
 
     if do_plot: 
-        print "Plotting is on!!"
+        print("Plotting is on!!")
         cv2.namedWindow('Images', cv2.WINDOW_AUTOSIZE)
     
     if len(capture_video_filename) > 0:
@@ -1048,7 +1049,7 @@ def processImages_CumSumDiff(eng, delay_s, do_plot, verbose, capture_video_filen
         cv2.putText(debug_img, ("Start capture, press 's' when ready..."), (100, 200), cv2.FONT_HERSHEY_DUPLEX, 2, util.magenta, 2)
         output = np.concatenate((bg_img, debug_img), axis=1)
         cv2.imshow('Images', output)
-        print "\n\nStart capture, press 's' when ready..."
+        print("\n\nStart capture, press 's' when ready...")
         while not cv2.waitKey(1000) & 0xFF == ord('s'): pass
 
     cum_img_bool = np.zeros(bg_img.shape[:2], np.bool)
@@ -1061,7 +1062,7 @@ def processImages_CumSumDiff(eng, delay_s, do_plot, verbose, capture_video_filen
     bg_img = img_queue.get()
     ret, fg_img = eng.next()
     while ret:        
-        print "---------------------------------------------------------------------"
+        print("---------------------------------------------------------------------")
         if False:
             delta_img = deltaImage(bg_img, fg_img, thresh_val)
             delta_img_blurred = cv2.GaussianBlur(delta_img, (kernel_size, kernel_size), 0)
@@ -1136,10 +1137,10 @@ def createProcessImages_EdgeCircles(eng, output_spec):
     while img_queue.qsize() < img_queue.maxsize:
         ret, bg_img = eng.next()
         if not ret:
-            print "Error: Not enough images to load queue"
+            print("Error: Not enough images to load queue")
             return ret, stats
         else:
-            print "Adding image to queue..."
+            print("Adding image to queue...")
             img_queue.put(bg_img)
 
     cum_img_bool = np.zeros(bg_img.shape[:2], np.bool)
@@ -1157,7 +1158,7 @@ def createProcessImages_EdgeCircles(eng, output_spec):
     ret, fg_img = eng.next()
     while ret:
         outfile = output_spec.replace('*',  ('%04d' % eng.idx()))
-        print "Creating file: " + outfile       
+        print("Creating file: " + outfile)       
         delta_image = cv2.absdiff(bg_img, fg_img)
         delta_image_gray = cv2.cvtColor(delta_image, cv2.COLOR_BGR2GRAY)
         ret,delta_image_thresh = cv2.threshold(delta_image_gray, thresh_val, 255, cv2.THRESH_BINARY)
