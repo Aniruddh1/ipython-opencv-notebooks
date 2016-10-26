@@ -53,6 +53,73 @@ def plot_imgs(img_data_lst, color=False, interp='none', max_cols=3, fig_size=10)
             plt.imshow(img_data[0], interpolation=interp, cmap='gray',vmin=0,vmax=255)
         plt.title('%s' % (img_data[1])), plt.xticks([]), plt.yticks([])
 
+def create_pdf_of_plots(pdf_data):
+    '''
+    First create pdf_data dict, ie:
+    
+    pdf_data = {}
+    pdf_data['pdf_file_name'] = 'NR2_ScorpionServer_data_plots.pdf'
+    pdf_data['Title'] = u'NR2 ScorpionServer Data Plots'
+    pdf_data['Author'] = u'Tom H. Rafferty / CNT'
+    pdf_data['Subject'] = u'Data Plots For ScorpionServer image dumps'
+    pdf_data['CreationDate'] = datetime.datetime.today()  # py3 uses datetime, py2 uses unicode str
+    pdf_data['ModDate'] = datetime.datetime.today()       # py3 uses datetime, py2 uses unicode str
+
+    pdf_data['plots_per_page'] = 5
+    pdf_data['plot_data_lst'] = plot_data_lst   # list of tuples containing (np.array, plot_title_str)
+    pdf_data['header_txt'] = 'NR2 ScorpionServer Image Data Plots\n(Flat lines means no data corruption)\n\n'
+    pdf_data['xlabel'] = 'Dispense Row Number (blank lines skiped)'
+    pdf_data['ylabel'] = 'Missing Drop\nIndication\n(0 = no missing)'
+    
+    Then call func, ie:
+    
+    create_pdf_of_plots(pdf_data)
+    
+    '''
+    from matplotlib.backends.backend_pdf import PdfPages
+
+    with PdfPages(pdf_data['pdf_file_name']) as pdf:
+        # set the file's metadata via the PdfPages object:
+        d = pdf.infodict() 
+        d['Title'] = pdf_data['Title']
+        d['Author'] = pdf_data['Author']
+        d['Subject'] = pdf_data['Subject']
+        d['CreationDate'] = pdf_data['CreationDate']  # py3 uses datetime, py2 uses unicode str
+        d['ModDate'] = pdf_data['ModDate']       # py3 uses datetime, py2 uses unicode str
+
+        # setup vars to control page layout
+        num_plots = len(pdf_data['plot_data_lst'])
+        plots_per_page = pdf_data['plots_per_page']
+        num_pages = np.ceil(num_plots / plots_per_page)
+        nb_pages = int(np.ceil(num_plots / float(plots_per_page)))
+        grid_size = (plots_per_page, 1)
+
+        print("Creating PDF (%s) with %d pages." % (pdf_data['pdf_file_name'], num_pages))
+        print("Total plots: %d, plots per page: %d" % (num_plots, plots_per_page))
+
+        for idx, data_to_plot in enumerate(pdf_data['plot_data_lst']):        
+            # Create a figure instance (ie. a new page) if needed
+            if idx % plots_per_page == 0:
+                print("New page: Adding plot %d of %d" % (idx+1, len(pdf_data['plot_data_lst']))) 
+                plt.figure(figsize=(8.27, 11.25), dpi=100)
+                title = pdf_data['header_txt'] + data_to_plot[1]
+            else:
+                print("          Adding plot %d of %d" % (idx+1, len(pdf_data['plot_data_lst'])))
+                title = data_to_plot[1]
+
+            plt.subplot2grid(grid_size, (idx % plots_per_page, 0))
+            plt.plot(data_to_plot[0], color='b')
+            plt.title(title)
+            plt.ylim([-(data_to_plot[0].max()+5), data_to_plot[0].max()+5])
+            plt.xlabel(pdf_data['xlabel'])
+            plt.ylabel(pdf_data['ylabel'])
+
+            # Close the page if needed
+            if (idx + 1) % plots_per_page == 0 or (idx + 1) == num_plots:
+                plt.tight_layout()
+                pdf.savefig()  # saves the current figure into a pdf page
+                plt.close()
+                
 def fig2data( fig ):
     """
     @brief Convert a Matplotlib figure to a 4D numpy array with RGBA channels and return it
