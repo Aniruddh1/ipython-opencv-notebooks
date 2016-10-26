@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 import math
-#import Queue # for CumSumDiff
+import queue # for CumSumDiff
 from multiprocessing import Queue
 
 import util
@@ -881,7 +881,7 @@ def processImages_EdgeCircles(eng, delay_s, do_plot, verbose, capture_video_file
     delta = 0
     
     img_lag_cnt = 5 # must be > 0
-    img_queue = Queue.Queue(img_lag_cnt)
+    img_queue = queue.Queue(img_lag_cnt)
     
     while img_queue.qsize() < img_queue.maxsize:
         ret, bg_img = eng.next()
@@ -1020,7 +1020,7 @@ def processImages_CumSumDiff(eng, delay_s, do_plot, verbose, capture_video_filen
     stats['deltas'] = []
     
     img_lag_cnt = 10 # must be > 0
-    img_queue = Queue.Queue(img_lag_cnt)
+    img_queue = queue.Queue(img_lag_cnt)
     
     while img_queue.qsize() < img_queue.maxsize:
         ret, bg_img = eng.next()
