@@ -48,9 +48,9 @@ def plot_imgs(img_data_lst, color=False, interp='none', max_cols=3, fig_size=10)
         plt.subplot(r,c,idx+1)
         if color:
             #plt.imshow(img_data[0], interpolation='none', vmax=abs(img_data[0]).max(), vmin=-abs(img_data[0]).max())
-            plt.imshow(img_data[0], interpolation=interp)
+            plt.imshow(img_data[0].astype(np.float), interpolation=interp)
         else:
-            plt.imshow(img_data[0], interpolation=interp, cmap='gray',vmin=0,vmax=255)
+            plt.imshow(img_data[0].astype(np.float), interpolation=interp, cmap='gray')
         plt.title('%s' % (img_data[1])), plt.xticks([]), plt.yticks([])
 
 def create_pdf_of_plots(pdf_data):
