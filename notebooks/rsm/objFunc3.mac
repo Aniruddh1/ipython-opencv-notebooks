@@ -1,0 +1,35 @@
+
+vol_mean: a10 + a11*x1 + a12*x2;
+angle_std: f10 + f11*x1 + f12*x2;
+
+objFunc_p1: expand(angle_std^2);
+objFunc_p2: l1*(vol_mean - vol_tgt);
+
+
+objFunc: expand(1/2*(objFunc_p1) - objFunc_p2);
+
+dObjFunc_dx1: diff(objFunc, x1);
+dObjFunc_dx2: diff(objFunc, x2);
+dObjFunc_dl1: diff(objFunc, l1);
+
+d2ObjFunc_dx1x1: diff(dObjFunc_dx1, x1);
+d2ObjFunc_dx1x2: diff(dObjFunc_dx1, x2);
+d2ObjFunc_dx1l1: diff(dObjFunc_dx1, l1);
+
+d2ObjFunc_dx2x1: diff(dObjFunc_dx2, x1);
+d2ObjFunc_dx2x2: diff(dObjFunc_dx2, x2);
+d2ObjFunc_dx2l1: diff(dObjFunc_dx2, l1);
+
+d2ObjFunc_dl1x1: diff(dObjFunc_dl1, x1);
+d2ObjFunc_dl1x2: diff(dObjFunc_dl1, x2);
+d2ObjFunc_dl1l1: diff(dObjFunc_dl1, l1);
+
+J: matrix([dObjFunc_dx1],
+          [dObjFunc_dx2],
+          [dObjFunc_dl1]);
+H: matrix([d2ObjFunc_dx1x1, d2ObjFunc_dx1x2, d2ObjFunc_dx1l1],
+          [d2ObjFunc_dx1x2, d2ObjFunc_dx2x2, d2ObjFunc_dx2l1],
+          [d2ObjFunc_dl1x1, d2ObjFunc_dl1x2, d2ObjFunc_dl1l1]);
+J
+H
+

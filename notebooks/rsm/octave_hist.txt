@@ -1,0 +1,128 @@
+   84 gridsearch
+   85 avg_gridsearch
+   86 avg_gridsearch
+   87 rsmsearch
+   88 rsmsearch
+   89 step = [0.0 0.0]';
+   90 step
+   91 fit = [99999.9 0 0]';
+   92 fit
+   93 fit = [99999.9 0 0];
+   94 fit
+   95 step = [0.0 0.0];
+   96 step
+   97 rsmsearch
+  97 rsmsearch
+   98 rsmsearch
+  101 rsmsearch
+  102 gridsearch
+  103 avg_gridsearch
+  110 gridsearch
+  111 avg_gridsearch
+  127 rsmsearch
+  128 whos
+  129 figure(4)
+  130 surf(M)
+  131 rsmsearch
+  135 gridsearch
+  143 avg_gridsearch
+  148 rsmsearch
+  149 clear
+  150 rsmsearch
+  178 figure(1)
+  179 zlim([0.25 1.0])
+  180 rsmsearch
+  181 clear
+    182 rsmsearch
+  183 rsmsearch
+  184 rsmsearch
+  185 quit
+  186 # Octave 3.8.1, Fri Jul 08 15:32:29 2016 CDT <trafferty@trafferty-CNT>
+  187 exit
+  188 # Octave 3.8.1, Thu Jul 21 10:18:08 2016 CDT <trafferty@trafferty-CNT>
+  189 gridsearch.m
+  190 gridsearch
+  191 rsmsearch3
+  192 ../rsmsearch
+  193 rsmsearch
+  194 cd ..
+  195 rsmsearch
+  196 rsmsearch
+  197 cd pt2/
+  205 rsmsearch4
+  206 vol_mean: a10 + a11*x1 + a12*x2;
+  207 exit
+  208 # Octave 3.8.1, Wed Aug 10 09:58:40 2016 CDT <trafferty@trafferty-CNT>
+  209 t = 8
+  210 print t
+  211 print(t)
+  212 printf("%d", t)
+  213 printf("%d\n", t)
+  214 r,c = 128,772
+  215 (r,c) = 128,772
+  216 [r,c] = 128,772
+  217 [r,c] = (128,772)
+  218 [r,c] = [128,772]
+  219 r=128
+  220 c=772
+  221 clr
+  222 fname = "20161020-222714_BitMap_7.dat";
+  223 f = fopen(fname, "rb");
+  224 r = 772;
+  225 c = 128;
+  226 [val,count] = fread(f,[r,c],"uchar");
+  227 fclose(f);
+  228 count
+  229 whos
+  230 max(val)
+  231 history
+
+octave:28> gridsearch
+Grid Search Best Solution: 260.000000 19.000000 => 0.401360 pL after 8028 evals
+octave:29> gridsearch
+Grid Search Best Solution: 244.000000 19.000000 => 0.371304 pL after 8028 evals
+octave:30> gridsearch
+Grid Search Best Solution: 264.000000 19.000000 => 0.267567 pL after 8028 evals
+octave:31> gridsearch
+Grid Search Best Solution: 296.000000 21.000000 => 0.391666 pL after 8028 evals
+octave:32> gridsearch
+Grid Search Best Solution: 286.000000 17.000000 => 0.341376 pL after 8028 evals
+octave:33> gridsearch
+Grid Search Best Solution: 308.000000 21.000000 => 0.358436 pL after 8028 evals
+
+octave:34> avg_gridsearch
+Grid Search w/ Averaging Best Solution: 304.000000 21.000000 => 0.491087 pL after 80280 evals
+octave:35> avg_gridsearch
+Grid Search w/ Averaging Best Solution: 264.000000 21.000000 => 0.537163 pL after 80280 evals
+octave:36> avg_gridsearch
+Grid Search w/ Averaging Best Solution: 276.000000 21.000000 => 0.516389 pL after 80280 evals
+octave:37> avg_gridsearch
+Grid Search w/ Averaging Best Solution: 270.000000 21.000000 => 0.521662 pL after 80280 evals
+octave:38> avg_gridsearch
+Grid Search w/ Averaging Best Solution: 274.000000 21.000000 => 0.536328 pL after 80280 evals
+octave:39> avg_gridsearch
+Grid Search w/ Averaging Best Solution: 312.000000 21.000000 => 0.531312 pL after 80280 evals
+
+octave:40> rsmsearch
+RSM Search Best Solution: 355.655988 20.298295 => 0.572047 pL after 13360 evals
+octave:41> rsmsearch
+RSM Search Best Solution: 326.966121 19.905457 => 0.589479 pL after 9280 evals
+octave:42> rsmsearch
+RSM Search Best Solution: 343.690308 20.898807 => 0.578779 pL after 14320 evals
+octave:43> rsmsearch
+RSM Search Best Solution: 349.420467 20.492107 => 0.590880 pL after 12080 evals
+octave:44> rsmsearch
+RSM Search Best Solution: 347.479176 19.663133 => 0.586461 pL after 9840 evals
+octave:45> rsmsearch
+RSM Search Best Solution: 335.712765 20.537519 => 0.598551 pL after 12240 evals
+octave:46> rsmsearch
+RSM Search Best Solution: 339.217244 20.672200 => 0.590048 pL after 10880 evals
+octave:47> rsmsearch
+RSM Search Best Solution: 339.393677 20.805896 => 0.589105 pL after 18000 evals
+octave:48> rsmsearch
+RSM Search Best Solution: 344.102760 19.970307 => 0.586638 pL after 13600 evals
+octave:49> rsmsearch
+RSM Search Best Solution: 348.198922 20.813633 => 0.599308 pL after 13120 evals
+octave:50> rsmsearch
+RSM Search Best Solution: 348.836788 20.552837 => 0.597712 pL after 8160 evals
+o
