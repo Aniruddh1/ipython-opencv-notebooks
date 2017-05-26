@@ -4,7 +4,7 @@ from collections import OrderedDict
 
 import numpy as np
 
-def define_col_ids(numCams):
+def define_columns_and_ids(numCams):
     # cols = ['TS', ['measx_mm','scorex', 'measy_mm','scorey','cmeasx_mm','cscorex','cmeasy_mm','cscorey', 'x unwrap cnt', 'y unwrap cnt', 'post measx_mm', 'post measy_mm', 'post cmeasx_mm', 'post cmeasy_mm']]
     # col_ids = {}
     # for idx, col in enumerate(cols[1]):
@@ -23,17 +23,29 @@ def define_col_ids(numCams):
     for idx, col in enumerate(cols):
         col_ids[col] = idx
 
-    return col_ids
+    return cols, col_ids
 
 def parse_into_data_sets(data):
     data_ranges = []
     max_delta = 1
     start = 0
+    found_first = False
     for idx, d in enumerate(data):
+        '''
+        -----------------------------------
+        Log Starting: 2017-05-23 14:33:04.380
+        -----------------------------------
+        '''
+        if d.find('-----------') >= 0 or d.find('Log') >= 0:
+            data.remove(d)
+            continue
+
         if len(d) <= 1:
             print("Found blank line: ", d)
             continue
-        if idx == 0:
+
+        if found_first == False:
+            found_first = True
             d_prev = d
         else:
             try:
@@ -68,6 +80,9 @@ def parse_into_data_sets(data):
 def cleanup_and_format_data_set(data_set):
     data_set_formated = []
     for idx, data_row_str in enumerate(data_set):
+        if data_row_str.find('-----------') >= 0 or data_row_str.find('Log Starting') >= 0:
+            continue
+
         data_row_formatted = []
         data_row = data_row_str.split(',')
         #print(idx)
