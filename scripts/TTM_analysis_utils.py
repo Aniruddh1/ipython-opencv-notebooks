@@ -4,7 +4,15 @@ from collections import OrderedDict
 
 import numpy as np
 
-def define_columns_and_ids(numCams):
+def include_element(element):
+    if element.find('-----------') >= 0:
+        return False
+    elif element.find('Log') >= 0:
+        return False
+    else:
+        return True
+
+def define_columns_and_ids(numCams, legacy=False):
     # cols = ['TS', ['measx_mm','scorex', 'measy_mm','scorey','cmeasx_mm','cscorex','cmeasy_mm','cscorey', 'x unwrap cnt', 'y unwrap cnt', 'post measx_mm', 'post measy_mm', 'post cmeasx_mm', 'post cmeasy_mm']]
     # col_ids = {}
     # for idx, col in enumerate(cols[1]):
@@ -12,6 +20,10 @@ def define_columns_and_ids(numCams):
     # print(col_ids)
     
     cols = ['TS', 'time_s']
+
+    if not legacy:
+        cols.extend(['time_offset_s', 'numread', 'TTMNumComplete', 'TTMNumPartial'])    
+
     cam_fields = ['measx_mm','scorex', 'measy_mm','scorey','cmeasx_mm','cscorex','cmeasy_mm','cscorey', 'x unwrap cnt', 'y unwrap cnt', 'post measx_mm', 'post measy_mm', 'post cmeasx_mm', 'post cmeasy_mm']
 
     for i in range(numCams):
@@ -31,15 +43,6 @@ def parse_into_data_sets(data):
     start = 0
     found_first = False
     for idx, d in enumerate(data):
-        '''
-        -----------------------------------
-        Log Starting: 2017-05-23 14:33:04.380
-        -----------------------------------
-        '''
-        if d.find('-----------') >= 0 or d.find('Log') >= 0:
-            data.remove(d)
-            continue
-
         if len(d) <= 1:
             print("Found blank line: ", d)
             continue
@@ -77,7 +80,7 @@ def parse_into_data_sets(data):
         
     return data_ranges, data_sets
 
-def cleanup_and_format_data_set(data_set):
+def cleanup_and_format_data_set(data_set, legacy=False):
     data_set_formated = []
     for idx, data_row_str in enumerate(data_set):
         if data_row_str.find('-----------') >= 0 or data_row_str.find('Log Starting') >= 0:
@@ -96,63 +99,72 @@ def cleanup_and_format_data_set(data_set):
             dt1 = datetime.datetime.strptime(data_row[0][17:], "%Y-%m-%d %H:%M:%S.%f")
             t1 = time.mktime(dt1.timetuple()) + (dt1.microsecond / 1000000.0)
             data_row_formatted.append(t1-t0)
+
+        if legacy:
+            offset = 0
+        else:
+            data_row_formatted.append(float(data_row[2]))                 
+            data_row_formatted.append(int(data_row[3]))                 
+            data_row_formatted.append(int(data_row[4]))                 
+            data_row_formatted.append(int(data_row[5]))                 
+            offset = 4
         
-        data_row_formatted.append(float(data_row[2]))                 
-        data_row_formatted.append(int(data_row[3]))                   
-        data_row_formatted.append(float(data_row[4]))                 
-        data_row_formatted.append(int(data_row[5]))                   
-        data_row_formatted.append(float(data_row[6]))                 
-        data_row_formatted.append(int(data_row[7]))
-        data_row_formatted.append(float(data_row[8]))                 
-        data_row_formatted.append(int(data_row[9]))                   
-        data_row_formatted.append((data_row[10].count('0') - 1) * -1)
-        data_row_formatted.append((data_row[11].count('0') - 1) * -1)
-        data_row_formatted.append(float(data_row[13]))                
-        data_row_formatted.append(float(data_row[14]))                
-        data_row_formatted.append(float(data_row[15]))                
-        data_row_formatted.append(float(data_row[16]))                
-        data_row_formatted.append(float(data_row[18]))                
-        data_row_formatted.append(int(data_row[19]))                  
-        data_row_formatted.append(float(data_row[20]))                
-        data_row_formatted.append(int(data_row[21]))                  
-        data_row_formatted.append(float(data_row[22]))                
-        data_row_formatted.append(int(data_row[23]))                  
-        data_row_formatted.append(float(data_row[24]))                
-        data_row_formatted.append(int(data_row[25]))                  
-        data_row_formatted.append((data_row[26].count('0') - 1) * -1)
-        data_row_formatted.append((data_row[27].count('0') - 1) * -1)
-        data_row_formatted.append(float(data_row[29]))                
-        data_row_formatted.append(float(data_row[30]))                
-        data_row_formatted.append(float(data_row[31]))                
-        data_row_formatted.append(float(data_row[32]))                
-        data_row_formatted.append(float(data_row[34]))                
-        data_row_formatted.append(int(data_row[35]))                  
-        data_row_formatted.append(float(data_row[36]))                
-        data_row_formatted.append(int(data_row[37]))                  
-        data_row_formatted.append(float(data_row[38]))                
-        data_row_formatted.append(int(data_row[39]))                  
-        data_row_formatted.append(float(data_row[40]))                
-        data_row_formatted.append(int(data_row[41]))                  
-        data_row_formatted.append((data_row[42].count('0') - 1) * -1)
-        data_row_formatted.append((data_row[43].count('0') - 1) * -1)
-        data_row_formatted.append(float(data_row[45]))                
-        data_row_formatted.append(float(data_row[46]))                
-        data_row_formatted.append(float(data_row[47]))                
-        data_row_formatted.append(float(data_row[48]))                
-        data_row_formatted.append(float(data_row[50]))                
-        data_row_formatted.append(int(data_row[51]))                  
-        data_row_formatted.append(float(data_row[52]))                
-        data_row_formatted.append(int(data_row[53]))                  
-        data_row_formatted.append(float(data_row[54]))                
-        data_row_formatted.append(int(data_row[55]))                  
-        data_row_formatted.append(float(data_row[56]))                
-        data_row_formatted.append(int(data_row[57]))                  
-        data_row_formatted.append((data_row[58].count('0') - 1) * -1)
-        data_row_formatted.append((data_row[59].count('0') - 1) * -1)
-        data_row_formatted.append(float(data_row[61]))                
-        data_row_formatted.append(float(data_row[62]))                
-        data_row_formatted.append(float(data_row[63]))                
-        data_row_formatted.append(float(data_row[64]))
+        data_row_formatted.append(float(data_row[offset+2]))                 
+        data_row_formatted.append(int(data_row[offset+3]))                   
+        data_row_formatted.append(float(data_row[offset+4]))                 
+        data_row_formatted.append(int(data_row[offset+5]))                   
+        data_row_formatted.append(float(data_row[offset+6]))                 
+        data_row_formatted.append(int(data_row[offset+7]))
+        data_row_formatted.append(float(data_row[offset+8]))                 
+        data_row_formatted.append(int(data_row[offset+9]))                   
+        data_row_formatted.append((data_row[offset+10].count('0') - 1) * -1)
+        data_row_formatted.append((data_row[offset+11].count('0') - 1) * -1)
+        data_row_formatted.append(float(data_row[offset+13]))                
+        data_row_formatted.append(float(data_row[offset+14]))                
+        data_row_formatted.append(float(data_row[offset+15]))                
+        data_row_formatted.append(float(data_row[offset+16]))                
+        data_row_formatted.append(float(data_row[offset+18]))                
+        data_row_formatted.append(int(data_row[offset+19]))                  
+        data_row_formatted.append(float(data_row[offset+20]))                
+        data_row_formatted.append(int(data_row[offset+21]))                  
+        data_row_formatted.append(float(data_row[offset+22]))                
+        data_row_formatted.append(int(data_row[offset+23]))                  
+        data_row_formatted.append(float(data_row[offset+24]))                
+        data_row_formatted.append(int(data_row[offset+25]))                  
+        data_row_formatted.append((data_row[offset+26].count('0') - 1) * -1)
+        data_row_formatted.append((data_row[offset+27].count('0') - 1) * -1)
+        data_row_formatted.append(float(data_row[offset+29]))                
+        data_row_formatted.append(float(data_row[offset+30]))                
+        data_row_formatted.append(float(data_row[offset+31]))                
+        data_row_formatted.append(float(data_row[offset+32]))                
+        data_row_formatted.append(float(data_row[offset+34]))                
+        data_row_formatted.append(int(data_row[offset+35]))                  
+        data_row_formatted.append(float(data_row[offset+36]))                
+        data_row_formatted.append(int(data_row[offset+37]))                  
+        data_row_formatted.append(float(data_row[offset+38]))                
+        data_row_formatted.append(int(data_row[offset+39]))                  
+        data_row_formatted.append(float(data_row[offset+40]))                
+        data_row_formatted.append(int(data_row[offset+41]))                  
+        data_row_formatted.append((data_row[offset+42].count('0') - 1) * -1)
+        data_row_formatted.append((data_row[offset+43].count('0') - 1) * -1)
+        data_row_formatted.append(float(data_row[offset+45]))                
+        data_row_formatted.append(float(data_row[offset+46]))                
+        data_row_formatted.append(float(data_row[offset+47]))                
+        data_row_formatted.append(float(data_row[offset+48]))                
+        data_row_formatted.append(float(data_row[offset+50]))                
+        data_row_formatted.append(int(data_row[offset+51]))                  
+        data_row_formatted.append(float(data_row[offset+52]))                
+        data_row_formatted.append(int(data_row[offset+53]))                  
+        data_row_formatted.append(float(data_row[offset+54]))                
+        data_row_formatted.append(int(data_row[offset+55]))                  
+        data_row_formatted.append(float(data_row[offset+56]))                
+        data_row_formatted.append(int(data_row[offset+57]))                  
+        data_row_formatted.append((data_row[offset+58].count('0') - 1) * -1)
+        data_row_formatted.append((data_row[offset+59].count('0') - 1) * -1)
+        data_row_formatted.append(float(data_row[offset+61]))                
+        data_row_formatted.append(float(data_row[offset+62]))                
+        data_row_formatted.append(float(data_row[offset+63]))                
+        data_row_formatted.append(float(data_row[offset+64]))
         data_set_formated.append(data_row_formatted)
     return data_set_formated
         
