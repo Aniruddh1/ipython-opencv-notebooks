@@ -4,3 +4,4 @@ testSet
 transitionSet
 results/
 tmp
+**__pycache__**
