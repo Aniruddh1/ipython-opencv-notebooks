@@ -22,7 +22,7 @@ def define_columns_and_ids(numCams, legacy=False):
     cols = ['TS', 'time_s']
 
     if not legacy:
-        cols.extend(['time_offset_s', 'numread', 'TTMNumComplete', 'TTMNumPartial'])    
+        cols.extend(['time_offset_s', 'numread', 'TTMNumComplete', 'TTMNumPartial', 'TTM_SerialNum', 'Cam1_TimeStamp', 'Cam2_TimeStamp', 'Cam3_TimeStamp', 'Cam4_TimeStamp'])    
 
     cam_fields = ['measx_mm','scorex', 'measy_mm','scorey','cmeasx_mm','cscorex','cmeasy_mm','cscorey', 'x unwrap cnt', 'y unwrap cnt', 'post measx_mm', 'post measy_mm', 'post cmeasx_mm', 'post cmeasy_mm']
 
@@ -100,14 +100,24 @@ def cleanup_and_format_data_set(data_set, legacy=False):
             t1 = time.mktime(dt1.timetuple()) + (dt1.microsecond / 1000000.0)
             data_row_formatted.append(t1-t0)
 
+        udp = True
+
         if legacy:
             offset = 0
         else:
-            data_row_formatted.append(float(data_row[2]))                 
-            data_row_formatted.append(int(data_row[3]))                 
-            data_row_formatted.append(int(data_row[4]))                 
-            data_row_formatted.append(int(data_row[5]))                 
-            offset = 4
+            data_row_formatted.append(float(data_row[1]))  # TTM_time_offset_s     
+            data_row_formatted.append(int(data_row[2]))    # numread            
+            data_row_formatted.append(int(data_row[3]))    # TTMNumComplete          
+            data_row_formatted.append(int(data_row[4]))    # TTMNumPartial             
+            if udp:
+                data_row_formatted.append(int(data_row[5]))    # SerialNum            
+                data_row_formatted.append(int(data_row[6]))    # TimeStamp_uSec[0]            
+                data_row_formatted.append(int(data_row[7]))    # TimeStamp_uSec[1]            
+                data_row_formatted.append(int(data_row[8]))    # TimeStamp_uSec[2]            
+                data_row_formatted.append(int(data_row[9]))    # TimeStamp_uSec[3]            
+                offset = 9
+            else:
+                offset = 4
         
         data_row_formatted.append(float(data_row[offset+2]))                 
         data_row_formatted.append(int(data_row[offset+3]))                   
