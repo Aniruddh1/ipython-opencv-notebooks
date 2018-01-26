@@ -1,0 +1,35 @@
+
+
+1. Exit XFD.  This will also shutdown ScorpionServer process.
+
+2. Open c:\workspace\ScorpionServer_config.json in an editor
+
+3. In the section "XaarCmdAPI", change the field "dump_image_data" from false to true.  Save file.
+
+4. Restart XFD.
+
+5. Run a normal dispense.  In the workspace folder, there should be one or more files containing the raw bitmap data for the dispense.  The files should be named something like:
+
+   "YYYYMMDD-HHMMSS_BitMap_x.dat"
+
+   where "YYYYMMDD-HHMMSS" is the date-timestamp and
+         "x" is a serial number starting with 1.
+
+   Example:
+
+    Dumping image data to file: 20161020-222526_BitMap_1.dat
+
+ If the drop pattern is a single-pass dispense, then you should see one .dat file.  If it is a dual-pass dispense then you should see two .dat files.  Note that as long as the "dump_image_data" field is set to true, these files will continue to accumulate.
+
+6. When testing is complete, change the field "dump_image_data" from true back to false (see step 3).  Save file.
+
+
+Testing:
+g4x4 -> number 1
+
+
+CheckForCanon 2 pass:
+ swathe 1:
+  10/20/16 22:27:14.505: (XaarCmdAPI      ) [DEBUG]   Dumping image data to file: 20161020-222714_BitMap_6.dat
+ swathe 2:
+  10/20/16 22:27:14.581: (XaarCmdAPI      ) [DEBUG]   Dumping image data to file: 20161020-222714_BitMap_7.dat

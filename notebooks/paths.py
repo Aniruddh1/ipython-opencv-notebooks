@@ -1,23 +1,37 @@
 import os
-
-data_root = os.environ['DATA_ROOT']
-notebook_root = "%s/notebooks" % (data_root)
-scripts_root = "%s/scripts" % (data_root)
-images_root = "%s/images" % (data_root)
-projects_root = "%s/projects" % (data_root)
-results_root = "%s/results" % (data_root)
-tmp_root = "%s/tmp" % (data_root)
-
 from os.path import expanduser
-tmp_dir = '%s/tmp' % (expanduser("~"))
-ws_dir = '%s/workspace' % (expanduser("~"))
 
-path = {}
-path['notebook_root']=notebook_root
-path['scripts_root']=scripts_root
-path['images_root']=images_root
-path['projects_root']=projects_root
-path['results_root']=results_root
-path['tmp_root']=tmp_root
-path['tmp_dir']=tmp_dir
-path['ws_dir']=ws_dir
+class Paths:
+    def __init__(self):
+        self.data_root = os.environ['DATA_ROOT']
+        
+        self.notebook_root = "%s/notebooks" % (self.data_root)
+        self.scripts_root = "%s/scripts" % (self.data_root)
+        self.images_root = "%s/images" % (self.data_root)
+        self.projects_root = "%s/projects" % (self.data_root)
+        self.results_root = "%s/results" % (self.data_root)
+        self.tmp_root = "%s/tmp" % (self.data_root)
+
+        self.tmp_dir = '%s/tmp' % (expanduser("~"))
+        self.ws_dir = '%s/workspace' % (expanduser("~"))
+
+        self.mii_home = os.environ['MII_HOME']
+        self.inhouse = '%s/inhouse' % (self.mii_home)
+
+        self.path = {}
+        self.path['data_root']=self.data_root
+        self.path['notebook_root']=self.notebook_root
+        self.path['scripts_root']=self.scripts_root
+        self.path['images_root']=self.images_root
+        self.path['projects_root']=self.projects_root
+        self.path['results_root']=self.results_root
+        self.path['tmp_root']=self.tmp_root
+        self.path['tmp_dir']=self.tmp_dir
+        self.path['ws_dir']=self.ws_dir
+        self.path['mii_home']=self.mii_home
+        self.path['inhouse']=self.inhouse
+
+    def print_paths(self):
+        print("Paths defined in paths module:")
+        for k,v in self.path.items():
+            print(" paths.%s: %s" % (k,v))

@@ -1,0 +1,11 @@
+disp_utunomiya.bmp : UTSUNOMIYA after dispensing
+none_disp_komukai.bmp : KOMUKAI none dispensing in trouble = before dispensing
+disp_primming_komukai.bmp : KOMUKAI after dispensing for primming
+disp_komukai.bmp : KOMUKAI after dispensing for normal
+result_disp_utunomiya.bmp : My image processing (subtract Background)
+result_disp_utunomiyax16.bmp : My image processing (subtract Background) x gain 16
+result_none_disp_komukai.bmp : My image processing (subtract Background)
+result_none_disp_komukaix16.bmp : My image processing (subtract Background) x gain 16
+
+subtract background algorithm is 5pixels median filering image - image
+This algorithm mistake a camera noise with dispens.
