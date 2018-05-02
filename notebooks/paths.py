@@ -16,7 +16,7 @@ class Paths:
         self.ws_dir = '%s/workspace' % (expanduser("~"))
 
         self.mii_home = os.environ['MII_HOME']
-        self.inhouse = '%s/inhouse' % (self.mii_home)
+        self.inhouse = '%s/src/inhouse' % (self.mii_home)
 
         self.path = {}
         self.path['data_root']=self.data_root
