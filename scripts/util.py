@@ -244,3 +244,13 @@ class Image_Engine:
     def cleanup(self):
         if not self.is_glob:
             self.cap.release()
+
+def readRaw(filepath, rows, cols):
+    try: 
+        with open(filepath, 'rb') as fd:
+            raw_buf = np.fromfile(fd, dtype=np.uint8, count=rows*cols)
+        #raw_buf = 255-raw_buf
+        return raw_buf.reshape((rows, cols)) #notice row, column format
+    except FileNotFoundError:
+        print("Error! File not found: %s" % (filepath))
+        raise
