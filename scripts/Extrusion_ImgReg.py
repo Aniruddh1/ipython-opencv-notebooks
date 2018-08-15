@@ -119,33 +119,6 @@ for imgFolder in imgFolders:
 print(locs)
 
 
-# In[14]:
-
-
-loc = locs[0]
-print("loc: ", loc)
-
-loc_path = "%s/%s" % ( img_root, loc)
-GI_path = "%s/%s" % ( loc_path, getGoldenImage(loc))
-print("GI_path:", GI_path)
-
-GI_img =readImage( GI_path)
-
-print("GI_img shape: ", GI_img.shape)
-
-loc_files = glob.glob("%s/*.%s" % (loc_path, img_ext))
-print("loc_img path: ", loc_files[0])
-loc_img = readImage(loc_files[0])
-
-print("loc_img shape: ", loc_img.shape)
-#adder = cv2.addWeighted(loc_img,0.6,GI_img,0.4,0)
-
-plot_imgs([(GI_img, 'GI_path'), (loc_img, 'loc_img')], max_cols = 2, fig_size = 20)
-
-
-# In[11]:
-
-
 def findAlignMatrix(unaligned_img, target_img, warp_mode, max_iters):
     # Define 2x3 or 3x3 matrices and initialize the matrix to identity
     if warp_mode == cv2.MOTION_HOMOGRAPHY :
@@ -178,8 +151,6 @@ def alignImage(unaligned_img, target_img, warp_mode, warp_matrix):
     return aligned_img
 
 
-# In[12]:
-
 
 loc = locs[0]
 print("loc: ", loc)
@@ -193,11 +164,8 @@ print("GI_path:", GI_path)
 GI_img =readImage( GI_path)
 
 
-# In[ ]:
-
-
 number_of_iterations = 50;
-all_norms = []
+all_norms = {}
 
 for loc in locs:
     loc_path = "%s/%s" % ( img_root, loc)
@@ -209,8 +177,6 @@ for loc in locs:
         print("No GI for location: ", loc)
         continue
 
-
-
     GI_path = "%s/%s" % ( loc_path, GI)
     print("GI_path:", GI_path)
 
@@ -221,12 +187,17 @@ for loc in locs:
         print("Processing image (%d of %d): %s" % (idx, len(loc_files), loc_file))
         loc_img = readImage(loc_file)
 
-        warp_matrix_EUCL = findAlignMatrix(loc_img, GI_img, cv2.MOTION_EUCLIDEAN, number_of_iterations)
+        warp_mode = cv2.MOTION_EUCLIDEAN
+        #warp_mode = cv2.MOTION_TRANSLATION
+        
+        warp_matrix_EUCL = findAlignMatrix(loc_img, GI_img, warp_mode, number_of_iterations)
 
         norm = np.linalg.norm(warp_matrix_EUCL,ord=2)
-        norms.append(norm)
-        print("norm of matrix: ", norm)
-    all_norms.append(norms)
+        norms.append(str(norm))
+        #print("norm of matrix: ", norm)
+        print(norm)
+        print(warp_matrix_EUCL)
+    all_norms[loc] = norms
 
 
 # open output file for writing
