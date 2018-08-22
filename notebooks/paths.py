@@ -11,6 +11,7 @@ class Paths:
         self.projects_root = "%s/projects" % (self.data_root)
         self.results_root = "%s/results" % (self.data_root)
         self.tmp_root = "%s/tmp" % (self.data_root)
+        self.dat_root = "%s/dat" % (self.data_root)
 
         self.tmp_dir = '%s/tmp' % (expanduser("~"))
         self.ws_dir = '%s/workspace' % (expanduser("~"))
@@ -26,6 +27,7 @@ class Paths:
         self.path['projects_root']=self.projects_root
         self.path['results_root']=self.results_root
         self.path['tmp_root']=self.tmp_root
+        self.path['dat_root']=self.dat_root
         self.path['tmp_dir']=self.tmp_dir
         self.path['ws_dir']=self.ws_dir
         self.path['mii_home']=self.mii_home
