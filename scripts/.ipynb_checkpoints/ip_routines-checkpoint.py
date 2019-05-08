@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 import math
 import queue # for CumSumDiff
 from multiprocessing import Queue
+from scipy import ndimage 
 
 import util
 
@@ -1175,3 +1176,49 @@ def createProcessImages_EdgeCircles(eng, output_spec):
         ret, fg_img = eng.next()
 
     return True
+
+def faster_bradley_threshold(image, threshold=75, window_r=5): 
+    percentage = threshold/100. 
+    window_diam = 2*window_r + 1 
+    
+    foreground_value = 255
+    img_dtype = np.uint8
+    if image.dtype == 'uint16':
+        foreground_value = 32768
+        img_dtype = np.uint16
+    
+    # convert image to numpy array of grayscale values 
+    img = image.astype(np.float) 
+
+    # matrix of local means with scipy (this replaces integral image)
+    means = ndimage.uniform_filter(img, window_diam) 
+    
+    # result: 0 for entry less than percentage*mean, 255 otherwise 
+    height, width = img.shape[:2] 
+    result = np.zeros((height,width), img_dtype) # initially all 0 
+    result[img >= percentage * means] = foreground_value  # numpy magic :) 
+
+    return result
+
+def bradley_threshold(image, threshold=75, windowsize=5): 
+    ws = windowsize 
+    ##image2 = copy.copy(image).convert('L')
+    image2 = np.array(image.copy()).astype(np.float) 
+    
+    ##w, h = image.size 
+    (h,w) = image2.shape[:2] 
+
+    l = image.convert('L').load() 
+    l2 = image2.load() 
+    threshold /= 100.0 
+    for y in range(h): 
+        for x in range(w): 
+            #find neighboring pixels 
+            neighbors =[(x+x2,y+y2) for x2 in range(-ws,ws) for y2 in range(-ws, ws) if x+x2>0 and x+x2<w and y+y2>0 and y+y2<h] 
+            #mean of all neighboring pixels 
+            mean = sum([l[a,b] for a,b in neighbors])/len(neighbors) 
+            if l[x, y] < threshold*mean: 
+                l2[x,y] = 0 
+            else: 
+                l2[x,y] = 255 
+    return image2 
