@@ -34,6 +34,39 @@ BRIGHT_WHITE = '\033[37;1m'
 
 RESET = '\033[0m'
 
+# Styles for matplotlib plots...see plt.style.available for full list
+plt_pallets_light = [
+    'Solarize_Light2',
+    'grayscale',
+    'ggplot',
+    'seaborn-ticks',
+    '_classic_test',
+    'seaborn-darkgrid',
+    'seaborn',
+    'classic',
+    'seaborn-dark',
+    'fivethirtyeight',
+    'seaborn-white',
+    'seaborn-whitegrid'
+]
+
+plt_pallets_dark = [
+    'seaborn-dark-palette',
+    'seaborn-poster',
+    'tableau-colorblind10',
+    'seaborn-muted',
+    'seaborn-bright',
+    'seaborn-paper',
+    'seaborn-colorblind',
+    'seaborn-talk',
+    'seaborn-notebook',
+    'fast',
+    'bmh',
+    'seaborn-pastel',
+    'seaborn-deep',
+    'dark_background'
+]
+
 def polar2cart(r, theta_rad, centerXY):
     x = r  * np.cos(theta_rad) + centerXY[0]
     y = r  * np.sin(theta_rad) + centerXY[1]
