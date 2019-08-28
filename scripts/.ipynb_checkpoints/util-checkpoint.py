@@ -72,20 +72,44 @@ def polar2cart(r, theta_rad, centerXY):
     y = r  * np.sin(theta_rad) + centerXY[1]
     return x, y
 
-def plot_imgs(img_data_lst, color=False, interp='none', max_cols=3, fig_size=10):
+def plot_imgs(img_data_lst, interp='none', max_cols=3, fig_size=10):
     cnt=len(img_data_lst)
     r,c,n = cnt,cnt,1
     for idx, img_data in enumerate(img_data_lst):
         if idx % max_cols == 0:
             plt.figure(figsize=(fig_size*r,fig_size*c))
         plt.subplot(r,c,idx+1)
-        if color:
-            #plt.imshow(img_data[0], interpolation='none', vmax=abs(img_data[0]).max(), vmin=-abs(img_data[0]).max())
-            plt.imshow(img_data[0].astype(np.float), interpolation=interp)
-        else:
-            plt.imshow(img_data[0].astype(np.float), interpolation=interp, cmap='gray')
+        if img_data[0].ndim == 2:
+            plt.gray()
+        plt.imshow(img_data[0])
         plt.title('%s' % (img_data[1])), plt.xticks([]), plt.yticks([])
 
+def show_images(images, cols = 1, titles = None):
+    """Display a list of images in a single figure with matplotlib.
+    
+    Parameters
+    ---------
+    images: List of np.arrays compatible with plt.imshow.
+    
+    cols (Default = 1): Number of columns in figure (number of rows is 
+                        set to np.ceil(n_images/float(cols))).
+    
+    titles: List of titles corresponding to each image. Must have
+            the same length as titles.
+    """
+    assert((titles is None)or (len(images) == len(titles)))
+    n_images = len(images)
+    if titles is None: titles = ['Image (%d)' % i for i in range(1,n_images + 1)]
+    fig = plt.figure()
+    for n, (image, title) in enumerate(zip(images, titles)):
+        a = fig.add_subplot(cols, np.ceil(n_images/float(cols)), n + 1)
+        if image.ndim == 2:
+            plt.gray()
+        plt.imshow(image)
+        a.set_title(title)
+    fig.set_size_inches(np.array(fig.get_size_inches()) * n_images)
+    plt.show()
+        
 def create_pdf_of_plots(pdf_data):
     '''
     First create pdf_data dict, ie:

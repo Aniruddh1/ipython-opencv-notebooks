@@ -105,6 +105,18 @@ def subimage2(image, centerXY, theta, width, height):
 
     return cv2.warpAffine(image,mapping,(width, height),flags=cv2.WARP_INVERSE_MAP,borderMode=cv2.BORDER_REPLICATE)
 
+# Given centerpoint (cp) as a tuple of (X,Y), and height (h) and width (w),
+#  calculate the "slice" parameters, [startY:endY, startX:endX], returned
+#  as a list  
+def calcSlice(cp, h, w):
+    return ( (int(cp[1]-(w/2)), int(cp[1]+(w/2))), (int(cp[0]-(w/2)), int(cp[0]+(w/2))))
+
+# Given image, centerpoint (cp) as a tuple of (X,Y), and height (h) and width (w),
+#  return the sub-image (slice) of the given image
+def sliceImage(img, cp, h, w):
+    s = calcSlice(cp, h, w)
+    return img[s[1][0]:s[1][1], s[0][0]:s[0][1]] #np slice: [startY:endY, startX:endX]
+
 def findPtsOnCircle(centerXY, r):
     angles = [0, np.pi/4.0, np.pi, np.pi/4.0*3, np.pi/4.0*5, np.pi/4.0*7]
     #angles = [np.pi/4.0, np.pi/4.0*3, np.pi/4.0*5, np.pi/4.0*7]

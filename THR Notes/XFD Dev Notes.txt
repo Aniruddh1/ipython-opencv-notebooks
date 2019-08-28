@@ -1,0 +1,21 @@
+Setup for dev work:
+  $ export MII_WKSP=c:/workspace_test && echo $MII_WKSP
+  git branch: xfd_dual_pass_single_dispense
+  ant -Dim30i=true -Dskipobfuscate=true
+
+
+$ git remote -v
+  origin  trafferty@10.0.199.3:/home/git/repository.git (push)
+  thr     trafferty@10.0.199.3:/home/trafferty/src/cnt_repository.git (push)
+
+
+***************** installing pip on cygwin:
+$  wget bootstrap.pypa.io/get-pip.py
+$ python get-pip.pys
+
+
+
+set testCnt 100
+for { set idx 0 } { $idx < $testCnt } {  incr idx } { $xyt gotoPos -180 0 $c; $xyt waitForStop $c; $actions imprintDispense 0 0  $c; $xyt gotoPos 180 0 $c; $xyt waitForStop $c }
+
+$xyt gotoPos -180 0 $c; $xyt waitForStop $c; $actions imprintDispense 0 0 $c; $xyt gotoPos 180 0 $c;$xyt waitForStop $c

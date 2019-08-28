@@ -1,0 +1,159 @@
+10/12/16
+
+testing with Whitney.  Trying to figure out how to change encoder rate  when using ext encoder
+
+see notes in cleanroom  notebook for initial findings...
+
+Try changing Max Transport Speed (encoder tab):
+
+  ****** Section: XPMSEPDSetup3
+        TransportSpeed:  1000.0000 ->  1100.0000
+
+ No Change in drop spacing
+
+   ****** Section: XPMSEPDSetup3
+         TransportSpeed:  1000.0000 ->  1500.0000
+
+    No Change in drop spacing
+
+Try changing EncoderResolution (encoder tab):
+
+  ****** Section: Common
+       EncoderDivide: 47 -> 78
+  ****** Section: XPMSEPDSetup3
+       EncoderDivide: 47 -> 78
+       FractionalRegValue: 211360 -> 1352736
+       EncoderResolution:     0.5 ->     0.3000
+       EffectiveDivide: 47.037037 -> 78.395058
+       FractionalMultiple: 0.999213 -> 0.994961
+
+   No Change in drop spacing
+
+Try changing Encoder Divide: 47 -> 70 (encoder tab, Manual ENcoder Setup)
+
+  ****** Section: Common
+       EncoderDivide: 47 -> 70
+  ****** Section: XPMSEPDSetup3
+       EncoderDivide: 47 -> 70
+       Prescaler: 10 -> 1
+       FractionalRegValue: 211360 -> 0
+       PreScalarMultplyRequired: 1 -> 0
+       EncoderResolution:     0.5 ->     0.5000
+
+  Pattern all screwed up: split into three sections across print head
+
+Try ...  (encoder tab, Manual ENcoder Setup)
+
+  ****** Section: Common
+       EncoderDivide: 47 -> 57
+       EncoderPulseMultiply: 10 -> 15
+  ****** Section: XPMSEPDSetup3
+       EncoderDivide: 47 -> 57
+       EncoderPulseMultiply: 10 -> 15
+       Prescaler: 10 -> 1
+       FractionalRegValue: 211360 -> 0
+       PreScalarMultplyRequired: 1 -> 0
+       EncoderResolution:     0.5 ->     0.5000
+
+ Pattern all screwed up: split into three sections across print head
+
+Changed Required DPI 720 -> 800
+
+****** Section: Common
+     EncoderDivide: 47 -> 42
+     SubPixelDivide: 47 -> 42
+****** Section: XPMSEPDSetup3
+     EncoderDivide: 47 -> 42
+     FractionalRegValue: 211360 -> 2113664
+     SubPixelDivide: 47 -> 42
+     RequiredDPI: 720 -> 800
+     EncoderResolution:     0.5 ->     0.5000
+     EffectiveDivide: 47.037037 -> 42.333332
+     FractionalMultiple: 0.999213 -> 0.992126
+
+
+Changed Encoder Pulse multiply 10->100:
+
+****** Section: Common
+     EncoderPulseMultiply: 10 -> 100
+****** Section: XPMSEPDSetup3
+     EncoderPulseMultiply: 10 -> 100
+     Prescaler: 10 -> 1
+     FractionalRegValue: 211360 -> 0
+     PreScalarMultplyRequired: 1 -> 0
+     EncoderResolution:     0.5 ->     0.5000
+
+   Pattern all screwed up: split into three sections across print head
+
+
+fuck i dunno
+
+11/03/2016:
+
+  Test optimized code path at 675 mm/s
+
+  vel (mm/s)   |  enc freq (Hz)
+  -------------------------------
+    500        |  14172.13
+    675        |  19132.375  (actual: 19130.42)
+   1000        |  28344.26   (actual: 28343.77)
+
+ After setting to 19130.42 and saving XUSB.XML:
+
+  *** Section: XUSB
+  ****** Section: Common
+       EncoderPulseMultiply: 20 -> 10
+       Prescaler: 10 -> 200
+       FractionalRegValue: 211360 -> 11625168
+  ****** Section: XPMSEPDSetup3
+       EncoderPulseMultiply: 20 -> 10
+       DDFSValue: 4756 -> 6420
+
+tcl:
+  $xfd1 setDispenseVelocity 675 $c
+custom properties:
+  tcs0_dispenseVelocity_mmps=675
+
+  set testCnt 100
+  for { set idx 0 } { $idx < $testCnt } {  incr idx } {$actions imprintDispense 0 0  $c } ; $xyt gotoPos 180 0 $c
+
+pattern: CheckerForCanon_2pass_divby3_no3.drp
+
+  50      50
+  100     150
+  100     250
+  100     350
+  100     450
+  300     750
+  300     1050
+
+pattern: C:\workspace\recipe\CNT tool grids\small drops\g4x3s1_26x33.drp
+
+  50      1100
+  500     1600
+  500     2100
+  500     2600
+  1000    3600
+  500     4100
+
+  
+
+28347.04149014728
+
+------------------------------
+proc jetPat2 {{tcsNum 0} {patNum 0} {swatheNum 0}} {
+    global _swatheLists
+    global _xfd
+    if { ![info exists _xfd ] } {
+        puts "Can only dispense from within XFD - _xfd is not defined."
+        return
+    }
+    puts "Manually dispensing with external product detect, tcsID: $tcsNum, pattern: $patNum, swathe: $swatheNum"
+    set oldGenProductDetect [java::field [[[ $_swatheLists get $tcsNum ] get $patNum ] get $swatheNum] generateProductDetect]
+    java::field [[[ $_swatheLists get $tcsNum ] get $patNum ] get $swatheNum] generateProductDetect false
+    [java::field $_xfd xfdService] startDropRecipeSwathe $tcsNum $patNum $swatheNum
+    # Set the product detect back to what it was before this command ran
+    java::field [[[ $_swatheLists get $tcsNum ] get $patNum ] get $swatheNum] generateProductDetect $oldGenProductDetect
+}
+
+

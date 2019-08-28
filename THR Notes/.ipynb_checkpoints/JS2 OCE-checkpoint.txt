@@ -1,0 +1,102 @@
+2019_08_12
+
+JS2
+Branch:
+$ git st
+HEAD detached at ftb_2_4_27M_36_1
+
+Let's get rid of workspace_oce, and start using workspace for oce-related bins:
+ - everything from an Ant build
+ - OceServer
+
+First, backup workspace_oce (workspace_oce-backup-20190812-1456.tgz) and workspace ( workspace-backup-20190812-1610.tgz)
+
+  tar -czvf workspace-backup-`date "+%Y%m%d-%H%M"`.tgz workspace --exclude "workspace/realtimeData" --exclude "workspace/lib/auxil/jre" --exclude "workspace/log" --exclude "workspace/recipe" --exclude "workspace/images" --exclude "workspace/lib/auxil/tcl*"
+
+No luck...need to first update broker/gui since it is from 2016...
+
+2019_08_13
+
+Ken updated broker/gui software.  He used a tag (ftb_2_4_27M_36_1) and left the source tree at:
+ HEAD detached at ftb_2_4_27M_36_1
+
+I started with SWCMOSIM-852 branch, then:
+ - removed the vector hack
+ - merged in oce_server in order to get Oce v1.9 (had a couple conflicts)
+ - merged in master
+
+Then:
+ - build oce_server:
+   $ cd /c/dev/src/xfd/oce
+   $ make clean && make
+   $ make install -> cp'd the oce_server bins from deploy over to gui200
+ - built gui:
+   $ cd /c/dev/src/gui200
+   $ ant
+
+Then copied from workspace_oce -> workspace:
+ - etc/OceServer_config.json
+ - etc/xfd_custom.properties
+ - bmp folder
+ - def folder
+
+Then was able to startup workspace/bin/OceServer, as well as Xfd from button in panel (note: this also starts SS, but no worries since it is listening on a different port from OceServer).
+
+Could not get the GUI happy:
+ - Could not get the jetting pannel to enable the "Send Pattern to XFD" button
+
+...also could not start the IPCS?
+
+Fixed the IPCS: modified workspace/bin/miisystem_gui_custom
+Also changed miisystem_gui_custom to not startup SS
+
+Ok, had to moidify the JettingPanel.tcl to call the correct XFD function for loading patterns.  Had to change this for compare patterns function too.  Now we can load patterns
+
+Worked on multipass dispense with Whitney.
+
+With new code, RPO of large value (~24mm) no longer required.  It is now somehere around -4.2mm.  Talked to Brent about this.
+
+2019_08_19
+
+Problems with Compare Patterns:
+
+    puts "Using swatheGen makeDensePat to get ref swathe"
+    set ref [java::call com.militho.common.SwatheGenerator makeDensePat $referenceDRP]
+
+Error=java.lang.OutOfMemoryError: Java heap space
+
+referencePat = g4x8_A204_26x33.drp
+ Loading reference pattern: C:\Users\militho\Documents\Oce\OceMT_C32\recovery_test\20190819-14-01-55/referencePat.drp
+ Loading sample pattern:    C:\Users\militho\Documents\Oce\OceMT_C32\recovery_test\20190819-14-01-55/samplePat.drp
+
+
+Had to add the following HACK to swatheGenerator:
+diff --git a/gui200/java/com/militho/common/SwatheGenerator.java b/gui200/java/com/militho/common/SwatheGenerator.java
+index 5a7b024..7c47de2 100755
+--- a/gui200/java/com/militho/common/SwatheGenerator.java
++++ b/gui200/java/com/militho/common/SwatheGenerator.java
+@@ -856,9 +856,10 @@ public class SwatheGenerator {
+             return createEmptyDenseStruct(0.0705, 0.0705, 0, 0, 1, 1, defaultUnitDropVolume_pL * 1e-6);
+
+         boolean calculateGCDUsingFloatsObsolete = Common.getProperty("calculateGCDUsingFloatsObsolete").equals("true");
+-        boolean flexibleGCD = Common.getProperty("flexibleGCD").equals("true");
+-        double baseSpacingX = 0.0705541;
+-        double Denominator = 1;
++        //boolean flexibleGCD = Common.getProperty("flexibleGCD").equals("true");
++        boolean flexibleGCD = true;
++        double baseSpacingX = 0.0635;
++        double Denominator = 3;
+         if (!Common.getProperty("baseSpacingX").isEmpty()) {
+             baseSpacingX = Double.parseDouble(Common.getProperty("baseSpacingX"));
+         }
+@@ -887,8 +888,8 @@ public class SwatheGenerator {
+         }
+         System.out.println("xSpacing: " + xSpacing);
+
+-        double baseSpacingY = 0.0705541;
+-        Denominator = 1;
++        double baseSpacingY = 0.0635;
++        Denominator = 3;
+         if (!Common.getProperty("baseSpacingY").isEmpty()) {
+             baseSpacingY = Double.parseDouble(Common.getProperty("baseSpacingY"));
+         }

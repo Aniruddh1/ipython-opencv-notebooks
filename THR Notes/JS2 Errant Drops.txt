@@ -1,0 +1,541 @@
+ Dispense Operations
+ -------------------
+
+ 1.0) Pre-Dispense:
+
+    1.1) Swathe generation:
+
+     - Drop pattern is broken down into 1-to-n swathes, depending on density grid (SetupImageDataParametersUpdated, etc).
+       Typically n is 2, but we have some very dense patterns which produce 4 swathes.
+
+     - Each swathe will be a separate 'pass'.  All odd-numbered swathes are dispensed in forward direction, and all
+       even-numbered swathes are dispensed in the reverse direction.  In other words, the system moves back and forth
+       under the head, dispensing each swathe sequentially, with a product detect signal produced at the precise
+       time (XPM produces internal encoder signal).
+
+    1.2) All swathes downloaded to XPM (SetPrintDataUpdated, etc)
+
+ 2.0) Dispense Operation:
+
+    We have two "flows": a non-optimized flow we have been using for years (doesn't meet time budget), and a new optimized
+    flow which does meet time budget, but has two problems:
+
+       1) With "PrintTransportMode" == XPM.WEB -> offset problem between forward and reverse swathe passes.
+          - We believe this is caused by the fact that we dispense odd-number passes/swathes in the forward direction,
+            and even-numbered passes/swathes in the reverse direction, and the offset is not compensated for (we have
+            tried to compensate/fix this but have yet to be successful).
+
+       2) With "PrintTransportMode" == XPM.UNIBIPRINT -> errant drops appear.
+          - This problem is intermittent, say one dispense out of twenty.
+          - By 'errant drops', we observer drops from a few nozzles that are outside of the range of the nozzles that
+            are supposed to print.  For example, if we are dispensing a pattern which only uses nozzles 100-400 (head is a
+            1002), on 1 out of ~20 dispenses, we will also get 'errant' drops from nozzles 1-99 and/or 499-500.
+          - There does seem to be a pattern to the 'errant' drops though, but so far it has been too difficult to
+            define...thus we are refering to them as errant.
+
+   What follows is a breakdown of each flow:
+
+   2.0.1) Non-Optimized Dispense Flow:
+
+     Flow is considered "non-optimized" because each swathe is dispensed as an individual operation, ie, all steps (including
+     time-expensive EnablePrintMode) are done for each swathe.
+
+     1) <wait until system close to ready to start dispense>
+
+     2) ForEach swathe:
+
+     <wait until system ready for individual swathe>
+
+       2.1) EnablePrintMode(false)
+       2.2) Load ControlBlock settings for each row (SetupSwatheBlockParametersUpdated, SetPrintDataParametersUpdated)
+       2.3) Setup SEPD-related settings (SetDDFSValueSEPD, SetDDFSEnable, SetPDInternalSEPD)
+       2.4) EnablePrintMode(true)
+       2.5) Product Detect signal -> XPM, XPM creates internal encoder signal (no calls to ScorpionDLL)
+
+   2.0.2) Optimized Dispense Flow:
+
+     This flow is much better.  All calls to ScorpionDLL are done in advance of dispense time, then we simply
+     send product detect signal at exact time we want to start any given swathe (XPM produces internal encoder signal)
+
+     1) EnablePrintMode(false)
+     2) ForEach swathe:
+       2.1) Load ControlBlock settings for each row (SetupSwatheBlockParametersUpdated, SetPrintDataParametersUpdated)
+     3) Setup SEPD-related settings (SetDDFSValueSEPD, SetDDFSEnable, SetPDInternalSEPD)
+     4) EnablePrintMode(true)
+
+     <wait until system close to ready to start dispense>
+
+     5) ForEach swathe:
+
+      <wait until system ready for individual swathe>
+
+       5.1) Product Detect signal -> XPM, XPM creates internal encoder signal (no calls to ScorpionDLL)
+
+
+  Problems We are Seeing
+  ----------------------
+
+  "PrintTransportMode" == XPM.WEB
+
+   - Legacy setting, have been using this setting along with "Non-Optimized Dispense Flow" for many years
+   - Assumes all swathes are printed while traveling the same direction; there is no compensation for the head traveling
+     in the opposite direction
+   - However, CNT's operation has each swathe/pass travelling in an opposite direction (see Swathe Generation above).
+   - When using optimized dispense flow, we observe offset problem on even-passes (ie, swathe/pass #1 is correct, #2 has
+     offset problem, etc).  In non-optimized flow, presumably, offsets are correct since each swathe is dispensed as an
+     individual operation.
+
+
+  "PrintTransportMode" == XPM.UNIBIPRINT
+
+   - Started experimenting with this mode in April, 2016, once we realized that WEB was an incorrect setting since we
+     alternate directions for passes/swathes.
+   - Fixes even-pass offset problem (presumably because XPM is compensating for change in direction for each pass)
+   - However, we see 'errant' drop problem
+
+  Solution Options
+  -----------------
+
+   1) We go back to XPM.WEB using optimized flow and figure out how to compensate for reverse offset, thus fixing
+      even-numbered passes?
+
+   2) We stay with XPM.UNIBIPRINT (since it better reflects our actual operation), but somehow get to the bottom
+      of and fix the errant drop problem.
+
+
+
+
+ - "Non-Optimized Dispense Flow" (see above)
+   - Flow is considered non-optimized because each swathe is dispensed as an individual operation, ie, all steps (including
+     time-expensive EnablePrintMode) are done for each swathe.  Time penalty of ~100ms is significant, and needs to be eliminated.
+   - All swathes dispensed correctly (no offset problem between swathes).  Presumably, offsets are correct since swathe is
+     dispensed individually.
+
+ - "Optimized Dispense Operation" (see above)
+   - ControlBlock and SEPD settings for all swathes done ahead of time; only PD signal required at actual dispense time
+   - Swathes not dispensed correctly: "Even Pass Offset" problem.  Since PrintTransportMode is WEB, reverse pass offset not compensated for.
+
+
+ - For multi-pass, when each pass is a separate dispense operation (non-optimized), everything comes out okay.
+ - For optimized multi-pass (all passes loaded, then each pass just gets a PD), even passes have offset problem.
+ - No 'errant' drop problem?  need to verify...
+
+"PrintTransportMode" == XPM.UNIBIPRINT
+
+ - Changed in April, 2016
+ - Fixes even pass offset problem (presumably because XPM is compensating for change in direction for each pass)
+ - We see 'errant' drop problem
+
+
+-----------------------------
+From James:
+Hi Tom, yes that’s the default as there are 6 guard channels at either of the head. Thinking about it a bit more I
+think I can understand why you were seeing the offset problem when using web mode on even swathes. Web
+mode assumes that the printhead only ever travels in the same direction, there is no compensation for the head
+travelling in the opposite direction. In bi-directional mode the system applies a reverse offset value to the head
+when the encoder detects that the head is travelling backwards.
+
+For UNIBIPRINT these reverse offset values need to be set to the same values as the forward offsets – could you
+check that this is the case?
+Is it possible for you to send me the set of bitmaps that you are using and if possible a picture of the drop
+pattern along with the errant drops that you are seeing?
+Is there a regular pattern to the errant drops appearing (Is it every 5 swathes etc. ?)? My other thought is that
+you are perhaps getting the start/end of the previous/next swathe if the image data is not being completely
+clocked out at the end of each pass.
+Just to refresh my memory, you are using an external encoder input with a software product detect?
+
+08/09/2016
+
+INFO [RequestProcessor-5] (Xfd.java:957) - getDropRecipeSwatheVectors 0 rec:0
+INFO [RequestProcessor-5] (Xfd.java:988) - Vector 0 is -18.101023774999998, -0.007979125 to 27.639885025, -0.007979125
+INFO [RequestProcessor-5] (Xfd.java:988) - Vector 1 is 13.193209625, -0.043256175 to -32.547699175, -0.043256175
+
+CheckForCanon_2pass:
+
+ without padding:
+
+ INFO [RequestProcessor-5] (Xfd.java:957) - getDropRecipeSwatheVectors 0 rec:0
+ INFO [RequestProcessor-5] (Xfd.java:988) - Vector 0 is -46.269341125, -0.07055410000000001 to 12.904869974999997, -0.0705541000000
+ INFO [RequestProcessor-5] (Xfd.java:988) - Vector 1 is 13.352363425001816, -0.035277050000000004 to -45.82184767499818, -0.0352770
+ with padding:
+
+  INFO [RequestProcessor-5] (Xfd.java:957) - getDropRecipeSwatheVectors 0 rec:0
+  INFO [RequestProcessor-5] (Xfd.java:988) - Vector 0 is -46.269341125, -0.07055410000000001 to 27.799038824999997, -0.07055410000000
+  INFO [RequestProcessor-5] (Xfd.java:988) - Vector 1 is 13.352363425001816, -0.035277050000000004 to -60.71601652499818, -0.03527705
+
+
+  08/09/16 22:13:37.415: (XaarCmdAPI      ) [DEBUG]    _bXaarScorpion_loadControlBlock_Combo, bXaarScorpionSetupSwatheBlockParametersUpdated, row=1. UpdatedPrintDataParameters:
+  {
+          "CopyCount":    [1, 1],
+          "XPMSEPDSetup": [0, 0, 0, 0],
+          "RowLeadChannels":      [6, 6],
+          "RowTrailChannels":     [6, 6],
+          "PDFilter":     8,
+          "Spare":        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+          "OriginalParameters":   {
+                  "TotalImageWidth":      [1000, 1000],
+                  "SaveSubPixelOffset":   [[0, 0], [0, 0]],
+                  "GreyLevel":    1,
+                  "bBinaryBackgroundInvert":      false,
+                  "LastSwathe":   [true, true],
+                  "TrailChannels":        6,
+                  "SwatheStartIndex":     0,
+                  "PreviousPrintSwathe":  [0, 0],
+                  "CycleMode":    1,
+                  "PrintTransportMode":   4,
+                  "SwatheIncrement":      1000,
+                  "FirstSwathe":  [false, false],
+                  "SubPixelOffset":       19,
+                  "VLDPHCount":   0,
+                  "ThisSwathe":   1,
+                  "LoopCount":    1,
+                  "ImageLength":  [1552, 1552],
+                  "Head": 0,
+                  "SaveProductOffset":    [[10, 136], [10, 11]],
+                  "HeadIndex":    [0, 0],
+                  "SwatheMemoryCount":    [2, 2],
+                  "HeadChannels": 1000,
+                  "ImageSize":    [198656, 198656],
+                  "BitDifference":        1,
+                  "SubPixelDivide":       46,
+                  "bReverseSwatheOrder":  false,
+                  "Spare":        0,
+                  "HeadType":     9,
+                  "PreLoadSwatheBlock":   4,
+                  "PrintMode":    0,
+                  "LeadChannels": 6,
+                  "MemoryBlock":  [26088, 26088],
+                  "DirBlock":     1,
+                  "ProductOffset":        135,
+                  "StoredSwathes":        [1, 1],
+                  "GuardValue":   0,
+                  "EncoderDivide":        47,
+                  "StartDir":     [1, 0],
+                  "AllSwathesFit":        [true, true],
+                  "SendID":       [0, 0],
+                  "SysClock":     0,
+                  "ForwardBuffer":        true,
+                  "NibbleIndex":  1,
+                  "NumberOfRows": 2,
+                  "NibbleControl":        [15, 14],
+                  "FirstSwatheBlock":     32,
+                  "SourceStrokeWidth":    128,
+                  "SEPDSetup":    0,
+                  "LastSwatheInMemory":   [true, true],
+                  "bSelectHead":  [true, true],
+                  "InterGap":     0,
+                  "BufferReverse":        [false, true],
+                  "SeparateRows": 0,
+                  "PrintOnce":    true,
+                  "BiPrintKeepOdd":       false,
+                  "NextSwatheBlock":      32,
+                  "bReverseImageOrder":   false,
+                  "Enable2Bit":   false,
+                  "Binary":       true,
+                  "SwatheBlock":  46,
+                  "bPaletteRemap":        true,
+                  "FirstMemoryBlock":     [22964, 22964],
+                  "MemoryBlocksNeeded":   [3104, 3104],
+                  "DataChannels": 500,
+                  "NumberSwathes":        [2, 2]
+          }
+  }
+
+-----------------------
+
+First test: hardcode to 9396:
+INFO [RequestProcessor-5] (PrintManagerXpm.java:570) - Setting up DDFS. DDFSValue = 1341370
+INFO [RequestProcessor-5] (PrintManagerXpm.java:571) -   swathe.internalEncoderFrequency_Hz = 28347.04149014728
+INFO [RequestProcessor-5] (PrintManagerXpm.java:572) -   DDFSMultiplier                     = 0.3356
+INFO [RequestProcessor-5] (PrintManagerXpm.java:573) -   cycleMode                          = 3
+INFO [RequestProcessor-5] (PrintManagerXpm.java:574) -   encoderDivide                      = 47
+INFO [RequestProcessor-5] (PrintManagerXpm.java:575) -   ...DDFSValue (multiplied together) = 1341370
+INFO [RequestProcessor-5] (PrintManagerXpm.java:577) -   HACK!! Override suggested by Xaar, DDFSValue = 9396
+INFO [RequestProcessor-5] (XPM.java:103) - XaarCmdAPI: Calling bXaarScorpionSetDDFSValueSEPD...call success
+INFO [RequestProcessor-5] (PrintManagerXpm.java:591) - Using internal encoder frequency of 28347.04149014728 Hz
+
+no drops on wafer.  LED indicated that it was printing...
+
+Second test: hardcode encoderdivide to 10:
+INFO [RequestProcessor-5] (PrintManagerXpm.java:571) - Setting up DDFS. DDFSValue = 285398
+INFO [RequestProcessor-5] (PrintManagerXpm.java:572) -   swathe.internalEncoderFrequency_Hz = 28347.04149014728
+INFO [RequestProcessor-5] (PrintManagerXpm.java:573) -   DDFSMultiplier                     = 0.3356
+INFO [RequestProcessor-5] (PrintManagerXpm.java:574) -   cycleMode                          = 3
+INFO [RequestProcessor-5] (PrintManagerXpm.java:575) -   encoderDivide                      = 10
+INFO [RequestProcessor-5] (PrintManagerXpm.java:576) -   ...DDFSValue (multiplied together) = 285398
+INFO [RequestProcessor-5] (XPM.java:103) - XaarCmdAPI: Calling bXaarScorpionSetDDFSValueSEPD...call success
+INFO [RequestProcessor-5] (PrintManagerXpm.java:592) - Using internal encoder frequency of 28347.04149014728 Hz
+INFO [RequestProcessor-5] (PrintManagerXpm.java:596) -   SetDDFSEnable                      = 1
+INFO [RequestProcessor-5] (XPM.java:103) - XaarCmdAPI: Calling bXaarScorpionSetDDFSEnable...call success
+INFO [RequestProcessor-5] (PrintManagerXpm.java:603) -   SetPDInternal                      = 0
+
+drops on wafer, but pattern was spread out along dispense axis, and pass 1 not aligned with pass 2
+-------------------------------------------------------------------------------------------
+
+
+Params for new branch xfd_optimized_dispense:
+
+leadCols = 6        #1001/2 head
+trailCols = 6       #1001/2 head
+dataChannels = 500  #1001/2 head
+
+XPMComboFunctions=true
+bypassXUSBVersionErrors=true
+enableScorpionLog=true
+optimizeMultiPass=true
+
+bypassVersionErrors?
+expectedDLLVersion
+expectedFPGAVersion
+
+
+PrintManagerXpm::startPrintingSwathe
+PrintManagerXpm::startPrintingAllSwathes
+PrintManagerXpm::startPrintingSwatheZero
+
+
+backup:
+  cd /c &&  tar czvf workspace-backup-`date +%Y%m%d`.tgz workspace/etc/ workspace/bin/ workspace/lib workspace/scripts/
+
+C:\workspace\recipe\CNT tool grids\small drops\g4x1pt5S_referencePatEdited_12.98max.drp
+
+-------------------------------------
+July/Aug 2016 Thruput Testing
+
+Goal: Capture logs/wireshark data when errant drops happen
+
+James' suggestions:
+1. Enable verbose logging in Scorpion – to do this you need to edit XUSBDLL.xml which is located in C:\Xaar, you need to add the line:
+
+   <BigLog type="integer" value="1" /> to the <Configuration> section of that file
+
+2. Start up Wireshark and point it at the NIC that the XPM is running through
+
+3. Enable logging (XaarScorpionAllowLogging).  Add to xfd properties file:
+
+    enableScorpionLog=true
+
+4. Run your print run for how many swathes it takes for the errant drops to appear
+
+5. If possible, note the swathe number that the errant drops occurred on (I don’t know if this is possible in real time or whether you can establish when this occurred after the fact?)
+
+Workflow:
+
+  1) Setup the logging as per James (see above)
+  2) Start a wireshark capture session on XPM nic
+  3) Dispense a multi-swathe pattern, note the time stamp
+  4) Check for errant drops.  If none, go-to step 2, otherwise end test
+
+set testCnt 100
+for { set idx 0 } { $idx < $testCnt } {  incr idx } { $xyt gotoPos -180 0 $c; $xyt waitForStop $c; $actions imprintDispense 0 0  $c; $xyt gotoPos 180 0 $c; $xyt waitForStop $c }
+
+$xyt gotoPos -180 0 $c; $xyt waitForStop $c; $actions imprintDispense 0 0 $c; $xyt gotoPos 180 0 $c;$xyt waitForStop $c
+
+
+Single dispense with errant drops:
+ ScorpionDLL.txt: 22:46:47
+ wireshark: single_dispense_with_errant_drops.pcapng
+-------------------
+2016_07_27
+
+Startup / Init
+
+-----------------------------
+2016_09_02
+
+testing jetPat with external PD from
+
+loadPatToXfd recipe/shifted2x2-2pass.drp
+loadPatToXfd recipe/CheckerForCanon_2pass_divby3.drp
+
+set testCnt 10
+for { set idx 0 } { $idx < $testCnt } {  after 1000; incr idx } { jetPat2 0 0 0; after 10; jetPat2 0 0 1 }
+
+timing for above loop:
+    25.102 - 24.819  = 0.283
+     26.108 - 25.102 = 1.006
+     ------------------------
+                       1.289
+
+    26.108 - 26.389  = 0.281
+     27.397 - 26.389 = 1.008
+    ------------------------
+                       1.289
+
+    27.684 - 27.397  = 0.287
+     28.694 - 27.684 = 1.010
+    ------------------------
+                       1.297
+
+    28.994 - 28.694
+
+...so use these setting for cycle.py:
+
+   sudo ./cycle.py -c 2 -f 2 -l 10 -t 1.3
+
+
+---------------------
+09/13/16
+
+I think I need to better synchronize the jetPat2 cmd with cycle.py...let's add a socket connection
+
+tcl side:
+
+set s [socket 10.0.14.173 8888];fconfigure $s -buffering line
+
+loadPatToXfd recipe/CheckerForCanon_2pass_divby3_no3.drp
+set testCnt 100
+for { set idx 0 } { $idx < $testCnt } {  after 200; incr idx } { jetPat2 0 0 0; puts $s "go $idx-1"; after 400; jetPat2 0 0 1; puts $s "go $idx-2"; }
+
+
+set testCnt 100
+for { set idx 0 } { $idx < $testCnt } {  after 500; incr idx } { jetPat2 0 0 0; after 100; puts $s "go $idx-1"; after 500; jetPat 0 0 1;after 100; puts $s "go $idx-2"; }
+
+python side:
+import socket
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind(('10.0.14.173', 8888))
+s.listen(10)
+conn, addr = s.accept()
+
+#!/usr/bin/python
+
+import time
+from datetime import datetime
+import argparse
+import CHIP_IO.GPIO as GPIO
+import socket
+
+def doLog(log_msg):
+    print("%s: %s" % (datetime.now().strftime("%Y_%d_%m (%a) - %H:%M:%S.%f")[:-3], log_msg))
+
+if __name__ == "__main__":
+    '''
+    pd_socketServer.py -p port
+    '''
+    parser = argparse.ArgumentParser(description='open socket on specified port, listen for "go", produce PD signal')
+    parser.add_argument('-p',  dest='port', type=int, default=8888, help='port to listen on')
+
+    args = parser.parse_args()
+
+    GPIO.setup("CSID0", GPIO.OUT)
+    GPIO.setup("CSID1", GPIO.OUT)
+    GPIO.output("CSID0", 0)
+    GPIO.output("CSID1", 0)
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind(('', args.port))
+    s.listen(10)
+    doLog('Waiting on port %d' % ( args.port))
+    conn, addr = s.accept()
+    doLog('Recieved conn from %s' % ( addr))
+
+    while True:
+        d = conn.recv(10)
+        if d[:-2] == 'go':
+            doLog("Rcv'd go!")
+            GPIO.output("CSID0", 1)
+            GPIO.output("CSID1", 1)
+            time.sleep(0.100)
+            GPIO.output("CSID0", 0)
+            GPIO.output("CSID1", 0)
+
+------------------------------
+
+09/13/16 - 09/15/16
+
+ More tweaking of setting to get external encoder setting correct.
+
+  - Tried setting things up in XDemo, but nothing seemed to working
+  - Got Van's help.  Turns out it was all in the properties file:
+
+    encoderMultiply=10  # this defaults to 1, so we need to set explicitly to 10
+
+    interRowGap_mm = [half value used for int encoder]
+    In other words, if we use the following for internal encoder:
+       interRowGap_mm=4.797
+    ...then we would divide by 2 and set to:
+       interRowGap_mm=2.3985    #For external
+
+   ### set true for int encoder, false for external encoder
+   #headGroup_B_passesReversed=true
+   headGroup_B_passesReversed=false
+
+   # had to subtract ~1.5mm from RPO
+   # for external encoder:
+   #headGroup_B_reversePassOffset_mm=-1.500
+   headGroup_B_reversePassOffset_mm=40
+
+
+for { set idx 0 } { $idx < $testCnt } {  incr idx } {$actions imprintDispense 0 0  $c } ; $xyt gotoPos 180 0 $c
+
+pattern: CheckerForCanon_2pass_divby3_no3.drp
+
+ 09/16  Testing:
+  100     100
+  100     200
+  100     300
+  100     400
+  100     500
+  100     600
+  100     700
+  100     800
+  100     900
+  100     1000
+  100     1100
+  100     1200
+  100     1300
+  100     1400
+  100     1500
+  100     1600
+  100     1700
+  100     1800
+  100     1900
+  200     2100
+  200     2300
+  200     2500
+
+09/20 testing:
+
+pattern: CheckerForCanon_2pass_divby3_no3.drp
+
+   10      10
+  100     110
+  100     210
+  200     410
+  200     610
+  200     810
+  200     1010
+  200     1210
+  200     1410
+  200     1610
+  200     1810
+  200     2010
+  200     2210
+  300     2510
+
+9/21 testing:
+
+pattern: C:\workspace\recipe\CNT tool grids\small drops\g4x3s1_26x33.drp
+
+  200     200
+  200     400
+  200     600
+  600     1200 # can go 600 without cleaning wafer with this drop pattern
+  600     1800
+  600     2400
+  600     3000
+  600     3600
+
+10/03 testing with re-soldered cable and the xfd_optimized_dispense branch
+
+  10      10
+  10      20
+  100     120
+  100     220
+  400     620
+  400     1020
+  600     1620
+
+  good enough...
+
