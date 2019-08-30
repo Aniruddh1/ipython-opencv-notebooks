@@ -5,6 +5,7 @@ import math
 import queue # for CumSumDiff
 from multiprocessing import Queue
 from scipy import ndimage 
+import random
 
 import util
 
@@ -67,11 +68,11 @@ def findPeakpt(img, pt1, pt2, verbose=False):
     x, y = util.polar2cart(peakIdx, theta_rad, pt1)
     return x, y
 
-def rotateImage(image, angle):
+def rotateImage(image, angle, borderVal=255):
     row,col = image.shape[:2]
     center=tuple(np.array([row,col])/2)
     rot_mat = cv2.getRotationMatrix2D(center,angle,1.0)
-    new_image = cv2.warpAffine(image, rot_mat, (col,row))
+    new_image = cv2.warpAffine(image, rot_mat, (col,row), borderValue=(borderVal,)*3)
     return new_image
 
 def subimage(img, centre, theta, width, height):
@@ -107,15 +108,38 @@ def subimage2(image, centerXY, theta, width, height):
 
 # Given centerpoint (cp) as a tuple of (X,Y), and height (h) and width (w),
 #  calculate the "slice" parameters, [startY:endY, startX:endX], returned
-#  as a list  
+#  as a tuple of tuples  
 def calcSlice(cp, h, w):
-    return ( (int(cp[1]-(w/2)), int(cp[1]+(w/2))), (int(cp[0]-(w/2)), int(cp[0]+(w/2))))
+    return ( ( (cp[1]-int(h/2)), (cp[1]+int(h/2))), ( (cp[0]-int(w/2)), (cp[0]+int(w/2))))
 
 # Given image, centerpoint (cp) as a tuple of (X,Y), and height (h) and width (w),
 #  return the sub-image (slice) of the given image
 def sliceImage(img, cp, h, w):
     s = calcSlice(cp, h, w)
-    return img[s[1][0]:s[1][1], s[0][0]:s[0][1]] #np slice: [startY:endY, startX:endX]
+    return img[s[0][0]:s[0][1], s[1][0]:s[1][1]] #np slice: [startY:endY, startX:endX]
+
+def cross(img, cp, l, color, thickness=1):
+    seg = int(l/2)
+    cv2.line(img, (cp[0], cp[1]-seg), (cp[0], cp[1]+seg), color, thickness)
+    cv2.line(img, (cp[0]-seg, cp[1]), (cp[0]+seg, cp[1]), color, thickness)
+
+def sp_noise(image,prob):
+    '''
+    Add salt and pepper noise to image
+    prob: Probability of the noise
+    '''
+    output = np.zeros(image.shape,np.uint8)
+    thres = 1 - prob 
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            rdn = random.random()
+            if rdn < prob:
+                output[i][j] = 0
+            elif rdn > thres:
+                output[i][j] = 255
+            else:
+                output[i][j] = image[i][j]
+    return output
 
 def findPtsOnCircle(centerXY, r):
     angles = [0, np.pi/4.0, np.pi, np.pi/4.0*3, np.pi/4.0*5, np.pi/4.0*7]

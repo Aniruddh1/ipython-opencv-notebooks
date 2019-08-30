@@ -10,9 +10,11 @@ navy = (128, 0, 0)
 gray = (144, 128, 112)
 green = (0, 255, 0)
 red = (255, 0, 0)
-yellow = (0, 255, 255)
+cyan = (0, 255, 255)
+yellow = (255, 255, 0)
 magenta = (238, 0, 238)
 orange = (0, 154, 238)
+
 
 BLACK = '\033[30m'
 RED = '\033[31m'
@@ -83,6 +85,10 @@ def plot_imgs(img_data_lst, interp='none', max_cols=3, fig_size=10):
             plt.gray()
         plt.imshow(img_data[0])
         plt.title('%s' % (img_data[1])), plt.xticks([]), plt.yticks([])
+
+def rotate2D(pts, cnt, ang=np.pi/4):
+    '''pts = {} Rotates points(nx2) about center cnt(2) by angle ang(1) in radian'''
+    return np.dot(pts-cnt, np.array([[np.cos(ang), np.sin(ang)],[-np.sin(ang),np.cos(ang)]])) + cnt
 
 def show_images(images, cols = 1, titles = None):
     """Display a list of images in a single figure with matplotlib.
