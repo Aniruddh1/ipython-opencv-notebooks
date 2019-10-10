@@ -110,7 +110,10 @@ def subimage2(image, centerXY, theta, width, height):
 #  calculate the "slice" parameters, [startY:endY, startX:endX], returned
 #  as a tuple of tuples  
 def calcSlice(cp, h, w):
-    return ( ( (cp[1]-int(h/2)), (cp[1]+int(h/2))), ( (cp[0]-int(w/2)), (cp[0]+int(w/2))))
+    # adders are to deal with heights, widths which are not even
+    h_adder = 1 if h % 2 else 0
+    w_adder = 1 if w % 2 else 0
+    return ( ( (cp[1]-int(h/2)), (cp[1]+int(h/2)+h_adder)), ( (cp[0]-int(w/2)), (cp[0]+int(w/2)+w_adder)))
 
 # Given image, centerpoint (cp) as a tuple of (X,Y), and height (h) and width (w),
 #  return the sub-image (slice) of the given image
