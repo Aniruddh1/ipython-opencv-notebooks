@@ -83,7 +83,10 @@ def plot_imgs(img_data_lst, interp='none', max_cols=3, fig_size=10):
         plt.subplot(r,c,idx+1)
         if img_data[0].ndim == 2:
             plt.gray()
-        plt.imshow(img_data[0])
+            vmin_,vmax_ = 0,255
+        else:
+            vmin_,vmax_ = 0,255
+        plt.imshow(img_data[0], vmin=vmin_, vmax=vmax_)
         plt.title('%s' % (img_data[1])), plt.xticks([]), plt.yticks([])
 
 def rotate2D(pts, cnt, ang=np.pi/4):
